@@ -1,0 +1,36 @@
+# the database to which the server connects
+ovodata.DataContext.file            = /Users/barry/Desktop/data/tutorial.connection
+# don't allow more than 10 concurrent DataContexts (users)
+ovodata.DataContext.maxCacheSize    = 1
+# close DataContexts if not used for more than 60 seconds
+ovodata.DataContext.cacheExpiryMs   = 60000
+
+# this is returned in the OData response to identify the service (e.g., "Netflix.Catalog.v2")
+ovodata.OData4JServer.name          = "Ovation.Open.Data.Server.v1"
+# the URL to the service from the point of view of the server
+ovodata.OData4JServer.url           = http://denali.local:8080/Ovodata.svc/
+# largest result set size to return
+ovodata.OData4JServer.maxResults    = 100
+# whether or not to log incoming requests
+ovodata.OData4JServer.logRequest    = true
+# whether or not to log outgoing responses
+ovodata.OData4JServer.logResponse   = false
+
+
+## Log4J settings
+# sends data to both console and file at info level
+log4j.rootLogger                                = INFO, CONSOLE #, FILE
+
+# the console is configured to filter out anything less than a warning (to prevent the console from being cluttered)
+log4j.appender.CONSOLE                          = org.apache.log4j.ConsoleAppender
+log4j.appender.CONSOLE.Threshold                = WARN
+log4j.appender.CONSOLE.layout                   = org.apache.log4j.PatternLayout
+log4j.appender.CONSOLE.layout.ConversionPattern = %c %p: %m%n
+
+# the file accepts everything - this is typically used for debugging issues and capturing larger amounts of data than would fit in the console buffer
+log4j.appender.FILE                             = org.apache.log4j.FileAppender
+log4j.appender.FILE.File                        = ovodata.log
+log4j.appender.FILE.Append                      = true
+log4j.appender.FILE.Threshold                   = ALL
+log4j.appender.FILE.layout                      = org.apache.log4j.PatternLayout
+log4j.appender.FILE.layout.ConversionPattern    = %-4r [%t] %-5p %c %x - %m%n

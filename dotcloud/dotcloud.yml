@@ -1,0 +1,6 @@
+www:
+    type: java
+    approot: odata
+    # instances: x
+    environment:
+        OVATION_CONNECTION: ~/ovodatatest.connection

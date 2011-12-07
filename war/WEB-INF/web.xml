@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+	<context-param>
+		<param-name>ovodata.props</param-name>
+		<param-value>/var/lib/ovation/ovodata.props</param-value>
+	</context-param>
+
+	<listener>
+		<listener-class>ovation.odata.service.servlet.WebappListener</listener-class>
+	</listener>
+
+	<filter>
+		<filter-name>BasicAuthFilter</filter-name>
+		<filter-class>ovation.odata.service.servlet.OvationBasicAuthFilter</filter-class>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>BasicAuthFilter</filter-name>
+		<servlet-name>OData4J</servlet-name>
+	</filter-mapping>
+		
+	<servlet>
+		<servlet-name>OData4J</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+			<param-name>com.sun.jersey.config.property.resourceConfigClass</param-name>
+         	<param-value>org.odata4j.producer.resources.ODataResourceConfig</param-value>
+        </init-param>
+		<init-param>
+			<param-name>odata4j.producerfactory</param-name>
+			<param-value>ovation.odata.service.OvationOData4JProducer$Factory</param-value>
+		</init-param>
+		
+        <load-on-startup>1</load-on-startup>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>OData4J</servlet-name>
+		<url-pattern>/Ovodata.svc/*</url-pattern>
+	</servlet-mapping>
+</web-app>

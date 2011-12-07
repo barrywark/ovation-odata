@@ -1,0 +1,11 @@
+Copy WAR to dotcloud/odata/ROOT.war
+Copy conf/ to dotcloud/odata/conf
+
+environment.json (and .yml) in ~ after deployment
+
+Can run post-install hook: postinstall (executeable script in approot (odata/))
+
+--
+HOW TO CONFIGURE:
+conf should end up in /var/lib/ovation/ovodata.props
+connection file path in $OVODATA_CONNECTION_FILE environment variable or ovodata.DataContext.file property
