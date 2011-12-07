@@ -64,4 +64,8 @@
     		<lib file="${dir.distrib}/${jar.release}"/>
     	</war>
     </target>
+    
+    <target name="runserver" depends="jar" description="run test server">
+        <exec executable="${basedir}/run_server"/>
+    </target>
 </project>

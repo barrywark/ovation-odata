@@ -166,7 +166,7 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     
     /** every property of every child-type - ensures consistent naming */
     protected enum PropertyName     {
-        SamplingRate, SamplingUnits,
+        SamplingRates, SamplingUnits,
         ParentRoot,
         PluginID,
         Url,
@@ -228,7 +228,7 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     }
     protected static void addIOBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
         propertyTypeMap.put(PropertyName.ExternalDevice.name(),     	ExternalDevice.class);
-        propertyTypeMap.put(PropertyName.Units.name(),              	String.class);
+        propertyTypeMap.put(PropertyName.Units.name(),              	String[].class);
         collectionTypeMap.put(CollectionName.DeviceParameters.name(),   MapEntry.class);
         // base-type data
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);

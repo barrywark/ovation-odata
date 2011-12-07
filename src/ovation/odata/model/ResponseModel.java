@@ -26,8 +26,8 @@ public class ResponseModel extends ExtendedPropertyModel<String,Response> {
 	
 	static {
 		_propertyTypeMap.put(PropertyName.Epoch.name(),         Epoch.class);
-		_propertyTypeMap.put(PropertyName.SamplingRate.name(),	Double.class);
-		_propertyTypeMap.put(PropertyName.SamplingUnits.name(),	String.class);
+		_propertyTypeMap.put(PropertyName.SamplingRates.name(),	double[].class);
+		_propertyTypeMap.put(PropertyName.SamplingUnits.name(),	String[].class);
         
         addResponseDataBase(_propertyTypeMap, _collectionTypeMap);
 	}
@@ -61,7 +61,7 @@ public class ResponseModel extends ExtendedPropertyModel<String,Response> {
 		try {
 			switch(PropertyName.valueOf(propertyName)) {
 				case Epoch: 			return obj.getEpoch();
-				case SamplingRate: 		return obj.getSamplingRates();
+				case SamplingRates: 	return obj.getSamplingRates();
 				case SamplingUnits:		return obj.getSamplingUnits();
 	
 		        // ResponseDataBase
