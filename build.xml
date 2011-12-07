@@ -11,7 +11,10 @@
 	<property name="dir.dotcloud"       value="${basedir}/dotcloud/odata"/>
 	<property name="jar.release"       	value="ovodata.jar"/>
 	<property name="war.release"		value="ovodata.war"/>
-	<property name="war.release.root"           value="ROOT.war"/>
+	<property name="war.release.root"   value="ROOT.war"/>
+	<property name="guava.jar.path"     value="${dir.lib}/guava-r09.jar"/>
+	<property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.5-bundle-custom.jar"/>
+	<property name="ovation.jar.path"   value="${dir.lib}/ovation.jar"/>
 	
     <fileset id="set.jars" dir="${dir.lib}">
         <include name="guava-r09.jar" />
@@ -40,23 +43,17 @@
         </javac>
     </target>
 
-    <target name="jar" depends="compile" description="build war">
-    	<mkdir dir="${dir.3rdparty-tmp}"/>
-    	<!-- extract all the files in the jars and then repackage into release jar -->
-    	<unjar dest="${dir.3rdparty-tmp}" overwrite="true">
-    		<fileset refid="set.jars"/>
-    	</unjar>
+    <target name="jar" depends="compile" description="build jar">
 		<mkdir dir="${dir.distrib}"/>
 		<jar jarfile="${dir.distrib}/${jar.release}">
-			<fileset dir="${dir.3rdparty-tmp}">
-				<exclude name="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*"/>
-			</fileset>
     		<fileset dir="${dir.compile}"/>
 	    	<manifest>
 	    		<attribute name="Main-Class" value="ovation.odata.service.StandaloneJerseyServer"/>
 	    	</manifest>
+	    	<zipfileset includes="**/*" src="${ovation.jar.path}"/>
+            <zipfileset includes="**/*" src="${odata4j.jar.path}"/>
+            <zipfileset includes="**/*" src="${guava.jar.path}"/>
     	</jar>
-    	<delete dir="${dir.3rdparty-tmp}"/>
     </target>
 
     <target name="war" depends="jar" description="build war">
