@@ -1,8 +1,11 @@
 package ovation.odata.util;
 
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
 
 /**
  * a few utils they probably should add to google Maps.
@@ -32,28 +35,23 @@ public class CollectionUtils {
 		return map;
 	}
 	
+	/** wrap array in Collection and return Iterable that returns its iterator */
 	public static <T> Iterable<T> makeIterable(final T... array) {
 		if (array == null || array.length == 0) {
 			return makeEmptyIterable();
 		}
-		return makeIterable(
-			new Iterator<T>() {
-				final int len = array.length;
-				int _current = 0;
-				public boolean 	hasNext() 	{ return _current < len; }
-				public T 		next()		{ return array[_current++]; }
-				public void 	remove() 	{ throw new UnsupportedOperationException("remove not allowed"); }
-			}
-		);
+		return makeIterable(Lists.newArrayList(array));
 	}
 
+	/** convert Map to Set and return Iterable that returns its iterator */
 	public static <K,V> Iterable<Map.Entry<K,V>> makeIterable(final Map<K,V> map) {
 		if (map == null || map.isEmpty()) {
 			return makeEmptyIterable();
 		}
-		return makeIterable(map.entrySet().iterator());
+		return makeIterable(map.entrySet());
 	}
 
+	/** consume Enumeration into Collection and return Iterable wrapped around its iterator */
 	public static <T> Iterable<T> makeIterable(final Enumeration<T> e) {
 		if (e == null) {
 			return makeEmptyIterable();
@@ -66,16 +64,18 @@ public class CollectionUtils {
 			}
 		);
 	}
-	
+
 	public static <T> Iterable<T> makeIterable(final Iterator<T> i) {
 		if (i == null) {
 			return makeEmptyIterable();
 		}
-		return new Iterable<T>() {
-			public Iterator<T> iterator() {
-				return i;
-			}			
-		};
+		// consume iterator and store such that we can iterate again
+		return makeIterable(Lists.newArrayList( new Iterable<T>() { public Iterator<T> iterator() { return i; } } ));
+	}
+
+	/** Iterable is a iterator factory, not a wrapper */
+	public static <T> Iterable<T> makeIterable(final Collection<T> col) {
+		return new Iterable<T>() { public Iterator<T> iterator() { return col.iterator(); } };
 	}
 	
 	public static <T> Iterable<T> makeEmptyIterable() {
