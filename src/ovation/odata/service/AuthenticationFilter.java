@@ -18,13 +18,12 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
-import com.sun.net.httpserver.Authenticator;
-import com.sun.net.httpserver.HttpExchange;
 
 /**
  * this pre and post filter is responsible for making sure the user is authenticated
  * and that the proper DataContext is attached to the processing thread on the way in
  * and detached from it on the way out.
+ * NOT USED AT THIS TIME - JerseyAuthenticator is used instead for stand-alone servers
  * @author Ron
  *
  */
@@ -68,7 +67,7 @@ there's currently no logout planned but that's certainly easy to implement (forc
 		if (authKey != null) {
 			_log.debug("received auth key '" + authKey + "'");
 		}
-		DataContext ctx 	= DataContextCache.getDataContext(authKey);
+		DataContext ctx 	= null; // FIXME DataContextCache.getDataContext(authKey);
 		if (ctx == null) {
 			_log.info("User not yet authenticated (auth-token:" + authKey + ")");
 
@@ -134,7 +133,7 @@ there's currently no logout planned but that's certainly easy to implement (forc
 			
 		if (ctx != null) {
 			_log.debug("set context on thread");
-			DataContextCache.setThreadContext(ctx);
+// FIXME			DataContextCache.setThreadContext(ctx);
 			// keep request going
 			return req;
 		} else {
@@ -149,7 +148,7 @@ there's currently no logout planned but that's certainly easy to implement (forc
 		// auth needed - res.setStatus(401); w/ challenge of WWW-Auth: Basic
 		_log.debug("out-going- " + req + ", " + res);
 		// always detach the context from the thread to avoid leaks and other bad stuff
-		DataContextCache.setThreadContext(null);
+		DataContextCache.closeThreadContext();
 		
 		AuthState authState = (AuthState)req.getProperties().get(AUTH_STATE_KEY);
 		switch (authState) {
