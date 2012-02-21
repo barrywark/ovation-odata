@@ -31,10 +31,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class BasicGetTest extends TestCase {
-	private static final String SERVICE_URL 	= "http://localhost:8080/ovodata/Ovodata.svc/";
-	private static final String USERNAME 		= "ron";
-	private static final String PASSWORD 		= "passpass1";
-	private static final String DB_CON_FILE		= "/var/lib/ovation/db/dev.connection";
+	static final String SERVICE_URL 	= "http://localhost:8080/ovodata/Ovodata.svc/";
+	static final String USERNAME 		= "ron";
+	static final String PASSWORD 		= "passpass1";
+	static final String DB_CON_FILE		= "/var/lib/ovation/db/dev.connection";
 	
 	private static final ODataConsumer _odataClient = ODataConsumer.create(SERVICE_URL, OClientBehaviors.basicAuth(USERNAME, PASSWORD)); 
 	
@@ -82,47 +82,6 @@ public class BasicGetTest extends TestCase {
 //	<collection href="KeywordTags">
 //	<collection href="Epochs">
 //	<collection href="Resources">
-	
-	// disabled so it doesn't keep inserting new records every time
-	public static void _testInsertData() {
-		// insert project into DB
-		List<ProjectData> projects = Lists.newArrayList();
-		projects.add(new ProjectData().name("Test Project 3").purpose("test OvOData service")
-						.add(new ExperimentData().end(new DateTime())
-								.add(new DeviceData().name("Device 1").manufacturer("Initech"))
-								.add(new DeviceData().name("Device 42").manufacturer("Initrobe"))
-								.add(new DeviceData().name("Probe 100").manufacturer("ProbieTech"))
-								.add(new SourceData().label("Source 1")
-									.add(new EpochGroupData().label("epoch group 1").end(new DateTime())
-										.add(new EpochData()
-												.protocolId("insertionStress")
-												.param("key1", Double.valueOf(1.0))
-												.param("epochNumber", Integer.valueOf(1))
-												.tag("howdy!")
-												.tag("snow is cold")
-												.addPair("Device 1", new StimulusData(), new ResponseData())
-												.addPair("Device 42",
-														new StimulusData().devParam("theAnswer", Integer.valueOf(42)) .param("theQuestion", "Life, the Universe, and Everything"), 
-														new ResponseData().data(new double[]{42}, "none"))
-										)
-									)
-								)
-						)
-		);
-		
-		DataContext context = null;
-		try {
-			context = OvationDBTestHelper.getContext(USERNAME, PASSWORD, DB_CON_FILE);
-			OvationDBTestHelper.insertFixture(context, projects);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			fail("failed to insert test data - " + ex.toString());
-		} finally {
-			if (context != null) {
-				context.close();
-			}
-		}
-	}
 	
 	/**
 	 * assert that the server recognizes all entity types we expect it to recognize
