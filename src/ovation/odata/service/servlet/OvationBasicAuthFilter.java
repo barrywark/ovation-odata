@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 
 import ovation.OvationException;
 import ovation.UserAuthenticationException;
-import ovation.odata.service.JerseyAuthenticator;
+import ovation.odata.service.AuthUtil;
 import ovation.odata.util.DataContextCache;
 
 /**
@@ -48,15 +48,15 @@ public class OvationBasicAuthFilter implements Filter {
 			// auth attempt
 			_log.debug("attempt to authenticate '" + authHeader + "'");
 			try {
-				String[] userPasswordArray = JerseyAuthenticator.parseBasicAuthHeader(authHeader);
+				String[] userPasswordArray = AuthUtil.parseBasicAuthHeader(authHeader);
 				String userName = userPasswordArray[0];
 				String password = userPasswordArray[1];
-				if (JerseyAuthenticator.setThreadContext(userName, password)) {
+				if (AuthUtil.authenticateUser(userName, password)) {
 					try {
 						chain.doFilter(req, res);	// success!
 					} finally {
 						// detach the DataContext from the thread
-						DataContextCache.setThreadContext(null);
+						DataContextCache.closeThreadContext();
 					}
 					// don't return unauthorized response headers/error
 					return;
