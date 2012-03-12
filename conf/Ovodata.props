@@ -1,5 +1,5 @@
 # the database to which the server connects
-ovodata.DataContext.file            = /Users/barry/Desktop/data/tutorial.connection
+ovodata.DataContext.file            = /Users/barry/Documents/MATLAB/data/quickstart.connection
 # don't allow more than 10 concurrent DataContexts (users)
 ovodata.DataContext.maxCacheSize    = 1
 # close DataContexts if not used for more than 60 seconds
@@ -8,7 +8,7 @@ ovodata.DataContext.cacheExpiryMs   = 0
 # this is returned in the OData response to identify the service (e.g., "Netflix.Catalog.v2")
 ovodata.OData4JServer.name          = "Ovation.Open.Data.Server.v1"
 # the URL to the service from the point of view of the server
-ovodata.OData4JServer.url           = http://denali.local:8080/Ovodata.svc/
+ovodata.OData4JServer.url           = http://localhost:8080/Ovodata.svc/
 # largest result set size to return
 ovodata.OData4JServer.maxResults    = 100
 # whether or not to log incoming requests
