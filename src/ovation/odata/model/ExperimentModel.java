@@ -51,7 +51,7 @@ public class ExperimentModel extends ExtendedPropertyModel<String,Experiment> {
 		Experiment obj = (Experiment)target;
 		switch (CollectionName.valueOf(collectionName)) {
 			case EpochGroups:		return CollectionUtils.makeIterable(obj.getEpochGroups());
-			case Epochs:			return obj.getEpochIterable();
+			case Epochs:			return obj.getEpochsIterable();
 			case ExternalDevices:	return CollectionUtils.makeIterable(obj.getExternalDevices());
 			case Projects:			return CollectionUtils.makeIterable(obj.getProjects());
 			case Sources:			return CollectionUtils.makeIterable(obj.getSources());
