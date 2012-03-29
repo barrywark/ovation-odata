@@ -13,6 +13,7 @@ import org.odata4j.core.OEntityKey;
 import org.odata4j.edm.EdmDataServices;
 import org.odata4j.edm.EdmEntitySet;
 import org.odata4j.producer.EntitiesResponse;
+// FIXME 0.6 import org.odata4j.producer.EntityQueryInfo;
 import org.odata4j.producer.EntityResponse;
 import org.odata4j.producer.ODataProducer;
 import org.odata4j.producer.ODataProducerFactory;
@@ -159,7 +160,7 @@ public class OvationOData4JProducer extends InMemoryProducer {
      * @return the matching entity
      */
 	@Override
-	public EntityResponse getEntity(String entitySetName, OEntityKey entityKey, QueryInfo queryInfo) {
+	public EntityResponse getEntity(String entitySetName, OEntityKey entityKey, QueryInfo queryInfo) {	// FIXME 0.6 EntityQueryInfo
 		if (_log.isDebugEnabled()) {
 			_log.debug("getEntity(set:" + entitySetName + ", key:" + entityKey + ", queryInfo:{" + OData4JServerUtils.toString(queryInfo) + "}");
 		}
