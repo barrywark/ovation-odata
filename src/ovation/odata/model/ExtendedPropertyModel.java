@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.core4j.Func;
 import org.core4j.Func1;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.odata4j.core.OEntityKey;
 import org.odata4j.producer.QueryInfo;
 import org.odata4j.producer.inmemory.PropertyModel;
@@ -17,11 +18,14 @@ import org.odata4j.producer.inmemory.PropertyModel;
 import ovation.ExternalDevice;
 import ovation.IAnnotatableEntityBase;
 import ovation.IEntityBase;
+import ovation.IIOBase;
+import ovation.IResponseDataBase;
 import ovation.ITaggableEntityBase;
 import ovation.ITimelineElement;
 import ovation.KeywordTag;
 import ovation.NumericData;
 import ovation.NumericDataType;
+import ovation.Project;
 import ovation.Resource;
 import ovation.User;
 import ovation.odata.model.dao.MapEntry;
@@ -44,7 +48,8 @@ import com.google.common.collect.Maps;
 public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     public static final Logger _log = Logger.getLogger(ExtendedPropertyModel.class);
 
-    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type
+    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type - FIXME Ovation-specific
+    /** allows us to attach the QueryInfo to the handling thread so we don't have to pass it around everywhere */
     private static final ThreadLocal<QueryInfo> _threadQueryInfo = new ThreadLocal<QueryInfo>();
     
     protected Map<String,Class<?>> _fieldTypes;
@@ -114,11 +119,11 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     }
     
     @SuppressWarnings("unchecked")
-    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {
-        String typeName = getTypeName();
+    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {	// FIXME Ovation-specific
+        String typeName = getTypeName();	// the type-name of V
         String query     = "uuid == " + key.toKeyStringWithoutParentheses();
         _log.info("executing type:'" + typeName + "', query:'" + query + "'");
-        return (Iterator<V>)DataContextCache.getThreadContext().query(typeName, query); 
+        return (Iterator<V>)DataContextCache.getThreadContext().query(typeName, query);
     }
     
     // ExtendedPropertyModel instances keyed by value type
@@ -148,8 +153,11 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     public static void 		setQueryInfo(QueryInfo info) { if (info != null) { _threadQueryInfo.set(info); } else { _threadQueryInfo.remove(); } }
     public static QueryInfo getQueryInfo()             	 { return _threadQueryInfo.get(); }
     
+    // pretty much everything below this point is FIXME Ovation-specific
+    //
+    
     /** register model handlers for all Ovation API model classes */
-    public static void registerOvationModel() {
+    public static void registerOvationModel() {	
         ExtendedPropertyModel.addPropertyModel(new ProjectModel());
         ExtendedPropertyModel.addPropertyModel(new AnalysisRecordModel());
         ExtendedPropertyModel.addPropertyModel(new ExperimentModel());
@@ -170,7 +178,7 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     
     /** every property of every child-type - ensures consistent naming and also makes common util functions doable */
     protected enum PropertyName     {
-        SamplingRate, SamplingUnits,
+    	SamplingRates, SamplingUnits,
         ParentRoot,
         PluginID,
         Url,
@@ -211,8 +219,8 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     }
     
     protected static void addTimelineElement(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-        propertyTypeMap.put(PropertyName.EndTime.name(),    			DateTime.class);
-        propertyTypeMap.put(PropertyName.StartTime.name(),    			DateTime.class);
+        propertyTypeMap.put(PropertyName.EndTime.name(),    			LocalDateTime.class);
+        propertyTypeMap.put(PropertyName.StartTime.name(),    			LocalDateTime.class);
         // base-type data
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
     }
@@ -391,14 +399,15 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
      * @param obj - the base-type object
      * @param prop - the property to extract from the base-type object
      */
-    /*    
+    //    
     protected static Object getPropertyValue(IResponseDataBase obj, PropertyName prop) {
     	switch (prop) {
-    		// TODO
+    		// has no fields
     	}
     	return getPropertyValue((IIOBase)obj, prop); 
     }
-*//*
+// */
+/* there is no IPurposeAndNotesEntity
     protected static Object getPropertyValue(IPurposeAndNotesEntity obj, PropertyName prop) {
     	switch (prop) {
     		// TODO
@@ -408,8 +417,8 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
 */    
     protected static Object getPropertyValue(ITimelineElement obj, PropertyName prop) {
     	switch (prop) {
-			case EndTime:	return obj.getEndTime();
-			case StartTime:	return obj.getStartTime();
+			case EndTime:	return convertDateTime(obj.getEndTime());
+			case StartTime:	return convertDateTime(obj.getStartTime());
     	}
     	return getPropertyValue((IAnnotatableEntityBase)obj, prop); 
     }
@@ -428,6 +437,7 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
 */    
     protected static Object getPropertyValue(IAnnotatableEntityBase obj, PropertyName prop) {
     	switch (prop) {
+    		// obj.getAnnotationGroupTags() TONS TODO HERE
     		// no props
     	}
     	// pass up to base-type handler
@@ -443,19 +453,22 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     }
     
     protected static Object getPropertyValue(IEntityBase obj, PropertyName prop) {
-    	switch (prop) {
-			case Owner:					return obj.getOwner();
-			case URI:					return obj.getURI();
-			case UUID:					return obj.getUuid();
-// FIXME	case SerializedLocation:	return obj.getSerializedLocation(); not in interface
-// FIXME	case SerializedName:		return obj.getSerializedName();
-			case URIString:				return obj.getURIString();
+    	try {
+	    	switch (prop) {
+				case Owner:					return obj.getOwner();
+				case URI:					return obj.getURI();
+				case UUID:					return obj.getUuid();
+				case SerializedName:		return ((Project)obj).getSerializedName();	// EntityBase method
+				case URIString:				return obj.getURIString();
+	    	}
+	    	// no entry found for specified property
+	    	return null;
+    	} catch (Exception ex) {
+    		throw new IllegalArgumentException("reflection failed on object - " + ex, ex);
     	}
-    	// no entry found for specified property
-    	return null;
     }
     
-    /*
+    /* TODO
 The big new one in 1.1 is IAnnotation and IAnnotatableEntityBase. 
 It's a pretty simple model (IAnnotatableEntityBase has a collection of IAnnotations per-user, like the ITaggableEntityBase=>KeywordTag relationship). 
 Let's start by exposing this simple model. 
@@ -506,5 +519,7 @@ The usage, in fact, gets much more complicated
     public static Object getByURI(String uri) { 
     	return DataContextCache.getThreadContext().objectWithURI(uri);    // should be EntityBase FIXME
     }
+
+	static LocalDateTime convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
 
 }
