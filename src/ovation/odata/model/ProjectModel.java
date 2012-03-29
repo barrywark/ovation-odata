@@ -9,7 +9,6 @@ import org.core4j.Func1;
 import ovation.AnalysisRecord;
 import ovation.Experiment;
 import ovation.Project;
-import ovation.odata.model.dao.MapEntry;
 import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 
@@ -57,9 +56,11 @@ public class ProjectModel extends ExtendedPropertyModel<String,Project> {
 		PropertyName prop = PropertyName.valueOf(propertyName);
 		switch(prop) {
 			case Name:					return obj.getName();
+			case SerializedLocation:    return obj.getSerializedLocation();
+
 			// PurposeAndNotesEntity
-			case Notes:					return obj.getNotes();
-			case Purpose:				return obj.getPurpose();
+			case Notes:					return obj.getNotes();	// TODO - move these to IPurposeAndNotesEntity
+			case Purpose:				return obj.getPurpose();// TODO - move these to IPurposeAndNotesEntity
 		}
 		// look for it in base-type(s) of obj
 		return ExtendedPropertyModel.getPropertyValue(obj, prop);
