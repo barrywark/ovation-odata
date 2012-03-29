@@ -11,8 +11,7 @@
     <property name="dir.dotcloud"       value="${basedir}/dotcloud/odata"/>
     <property name="jar.release"        value="ovodata.jar"/>
     <property name="war.release"        value="ovodata.war"/>
-    <!-- TODO think about these props... -->
-<!--    <property name="war.release.root"   value="ROOT.war"/> -->
+    <property name="war.release.root"   value="ROOT.war"/>
     <property name="guava.jar.path"     value="${dir.lib}/guava-r09.jar"/>
     <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.5-bundle-custom.jar"/>
     <property name="ovation.jar.path"   value="${dir.lib}/ovation-1.1.jar"/>
@@ -45,39 +44,24 @@
     </target>
 
     <target name="jar" depends="compile" description="build war">
-        <mkdir dir="${dir.3rdparty-tmp}"/>
-        <!-- extract all the files in the jars and then repackage into release jar -->
-        <unjar dest="${dir.3rdparty-tmp}" overwrite="true">
-            <fileset refid="set.jars"/>
-        </unjar>
         <mkdir dir="${dir.distrib}"/>
         <jar jarfile="${dir.distrib}/${jar.release}">
-            <fileset dir="${dir.3rdparty-tmp}">
-                <exclude name="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*"/>
-            </fileset>
             <fileset dir="${dir.compile}"/>
             <manifest>
                 <attribute name="Main-Class" value="ovation.odata.service.StandaloneJerseyServer"/>
             </manifest>
-<!-- TODO think about this... what's the purpose of these lines? -->
-            <zipfileset includes="**/*" src="${ovation.jar.path}"/>
-            <zipfileset includes="**/*" src="${odata4j.jar.path}"/>
-            <zipfileset includes="**/*" src="${guava.jar.path}"/>
+        	<!-- we have to exclude any rsa signature files and manifests - the rest i remove just to keep things focussed and the jar smaller -->
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${ovation.jar.path}"/>
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${odata4j.jar.path}"/>
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${guava.jar.path}"/>
         </jar>
-        <delete dir="${dir.3rdparty-tmp}"/>
     </target>
 
     <target name="war" depends="jar" description="build war">
         <war basedir="${dir.war}" includes="**/*" warfile="${dir.distrib}/${war.release}">
             <lib file="${dir.distrib}/${jar.release}"/>
         </war>
-        <copy file="${dir.distrib}/${war.release}" tofile="${dir.dotcloud}/ROOT.war"/>
-<!-- isn't this the same as copying the war above?  not sure why this target is here, tho.  typically it's easier to call it ROOT.war 
-when you copy it (or better yet, symlink it) in the tomcat/webapps directory.            
-        <war basedir="${dir.war}" includes="**/*" warfile="${dir.dotcloud}/${war.release.root}">
-               <lib file="${dir.distrib}/${jar.release}"/>
-        </war>
--->        
+        <copy file="${dir.distrib}/${war.release}" tofile="${dir.dotcloud}/${war.release.root}"/>
     </target>
     
     <target name="runserver" depends="jar" description="run test server">
