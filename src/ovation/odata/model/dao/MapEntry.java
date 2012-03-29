@@ -20,13 +20,22 @@ import com.google.common.collect.Lists;
  *
  */
 public class MapEntry {
+/* FIXME 0.6	
+	private final static EdmType _type = EdmComplexType.newBuilder()
+			.setNamespace("Ovodata")
+			.setName("MapEntry")
+			.addProperties(Lists.newArrayList(new EdmProperty.Builder[]{
+					EdmProperty.newBuilder("key").setType(EdmSimpleType.STRING).setNullable(true),
+					EdmProperty.newBuilder("value").setType(EdmSimpleType.STRING).setNullable(true)}))
+			.build();
+*/	
 	private final static EdmType _type = new EdmComplexType("Ovodata", "MapEntry", 
 		Lists.newArrayList(new EdmProperty[]{
 			new EdmProperty("key", 	 EdmSimpleType.STRING, true),	
 			new EdmProperty("value", EdmSimpleType.STRING, true),	
 		}
 	)); 
-
+	
 	private final String _key;
 	private final String _value;
 
