@@ -76,8 +76,8 @@ public class ExperimentModel extends ExtendedPropertyModel<String,Experiment> {
 			case Notes:					return obj.getNotes();
 			case Purpose:				return obj.getPurpose();
 			// TimelineElement
-			case EndTime:				return obj.getEndTime();
-			case StartTime:				return obj.getStartTime();
+			case EndTime:				return convertDateTime(obj.getEndTime());
+			case StartTime:				return convertDateTime(obj.getStartTime());
 			// EntityBase
 			case Owner:					return obj.getOwner();
 			case URI:					return obj.getURI();

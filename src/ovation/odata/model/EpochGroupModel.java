@@ -75,8 +75,8 @@ public class EpochGroupModel extends ExtendedPropertyModel<String,EpochGroup> {
 			case Parent:				return obj.getParent();
 			case Source:				return obj.getSource();
 			// TimelineElement
-			case EndTime:				return obj.getEndTime();
-			case StartTime:				return obj.getStartTime();
+			case EndTime:				return convertDateTime(obj.getEndTime());
+			case StartTime:				return convertDateTime(obj.getStartTime());
 			// EntityBase
 			case Owner:					return obj.getOwner();
 			case URI:					return obj.getURI();
