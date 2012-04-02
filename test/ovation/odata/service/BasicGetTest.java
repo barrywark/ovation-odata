@@ -1,28 +1,24 @@
 package ovation.odata.service;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
 
 import org.core4j.Enumerable;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.odata4j.consumer.ODataConsumer;
-//FIXME 0.6 - import org.odata4j.consumer.behaviors.OClientBehaviors;
 import org.odata4j.core.EntitySetInfo;
 import org.odata4j.core.OClientBehaviors;
 import org.odata4j.core.OEntity;
 import org.odata4j.core.OEntityGetRequest;
 import org.odata4j.core.OEntityKey;
-import org.odata4j.core.OProperty;
+import org.odata4j.core.OLink;
 import org.odata4j.core.OQueryRequest;
-//FIXME 0.6 - import org.odata4j.jersey.consumer.ODataJerseyConsumer;
+import org.odata4j.core.ORelatedEntitiesLink;
+import org.odata4j.core.ORelatedEntityLink;
 
 import ovation.AnalysisRecord;
 import ovation.DataContext;
@@ -31,13 +27,20 @@ import ovation.Epoch;
 import ovation.EpochGroup;
 import ovation.Experiment;
 import ovation.ExternalDevice;
+import ovation.IAnnotation;
+import ovation.ITaggableEntityBase;
 import ovation.KeywordTag;
+import ovation.NumericDataType;
 import ovation.Project;
 import ovation.Resource;
 import ovation.Response;
 import ovation.Source;
 import ovation.Stimulus;
 import ovation.URLResource;
+import ovation.User;
+import ovation.odata.model.dao.Property;
+import ovation.odata.util.JUnitUtils;
+import ovation.odata.util.OData4JClientUtils;
 import ovation.odata.util.OvationDBTestHelper;
 
 import com.google.common.collect.Lists;
@@ -81,8 +84,19 @@ public class BasicGetTest {
 		KEYWORD_TAG("KeywordTags", 			KeywordTag.class), 
 		EPOCH("Epochs", 					Epoch.class),
 		RESOURCE("Resources", 				Resource.class),
-		_MAP_ENTRY("_MapEntries", 			Map.Entry.class),
-		_STRING("_Strings",                 String.class),
+		USER("Users",						User.class),
+		
+		_STRING("_Strings",              	String.class),
+		_DOUBLE("_Doubles",                 Double.class),
+		_FLOAT("_Floats",                 	Float.class),
+		_LONG("_Longs",                 	Long.class),
+		_INTEGER("_Integers",               Integer.class),
+		
+		_PROPERTY("_Properties",			Property.class),
+		_ANNOTATION("_Annotations",			IAnnotation.class),
+		
+		_TaggableEntityBase("_ITaggableEntityBases",ITaggableEntityBase.class),
+		_NumericDataTypes("_NumericDataTypes",		NumericDataType.class),
 		;
 
 		private final String 	_setName;
@@ -149,7 +163,7 @@ public class BasicGetTest {
 		// and that every element from the service matches the same element in the DB
 		Assert.assertEquals(allFromDb.size(), allFromService.count());
 		for (OEntity entity : allFromService) {
-			compareToDb(type, entity);
+			compareToDb(type, entity);		
 		}
 	}
 
@@ -304,6 +318,18 @@ public class BasicGetTest {
 		OQueryRequest<OEntity> req = _odataClient.getEntities(type._setName);
 		return req.execute();
 	}
+
+	static OEntity getSubEntity(Entity type, OEntity entity, String name) {
+		ORelatedEntityLink link = entity.getLink(name, ORelatedEntityLink.class);
+		OEntityGetRequest<OEntity> req = _odataClient.getEntity(link);
+		return req.execute();
+	}	
+	
+	static Enumerable<OEntity> getSubEntities(Entity type, OEntity entity, String name) {
+		ORelatedEntitiesLink link = entity.getLink(name, ORelatedEntitiesLink.class);
+		OQueryRequest<OEntity> req = _odataClient.getEntities(link);
+		return req.execute();
+	}	
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	static <T> List<T> getAllFromDB(Class<T> type) {
@@ -314,71 +340,21 @@ public class BasicGetTest {
 	static <T> T getFromDB(String uri) {
     	return (T)_dbContext.objectWithURI(uri);		
 	}
-	static String 	getStringProperty(OEntity entity, String name) { 
-		OProperty<String> prop = entity.getProperty(name, String.class);
-		return prop != null ? prop.getValue() : null; 
-	}
-	static String[] getStringArrayProperty(OEntity entity, String name) { 
-		OProperty<String[]> prop = entity.getProperty(name, String[].class);
-		return prop != null ? prop.getValue() : null; 
-	}
-	static double[] getDoubleArrayProperty(OEntity entity, String name) { 
-		OProperty<double[]> prop = entity.getProperty(name, double[].class);
-		return prop != null ? prop.getValue() : null; 
-	}
 
-	static DateTime getDateTimeProperty(OEntity entity, String name) { 
-		OProperty<LocalDateTime> prop = entity.getProperty(name, LocalDateTime.class);
-		return prop != null && prop.getValue() != null ? prop.getValue().toDateTime() : null; 
-	}
-	static Integer  getIntegerProperty(OEntity entity, String name) { 
-		OProperty<Integer> prop = entity.getProperty(name, Integer.class);
-		return prop != null ? prop.getValue() : null; 
-	}
-	static int		getIntegerProperty(OEntity entity, String name, int def) {
-		Integer val = getIntegerProperty(entity, name);
-		return val != null ? val.intValue() : def;
-	}
-	static byte[]	getByteArrayProperty(OEntity entity, String name) { 
-		OProperty<byte[]> prop = entity.getProperty(name, byte[].class);
-		return prop != null ? prop.getValue() : null; 
-	}
-	static Double	getDoubleProperty(OEntity entity, String name) { 
-		OProperty<Double> prop = entity.getProperty(name, Double.class);
-		return prop != null ? prop.getValue() : null; 
-	}
-	static Boolean	getBooleanProperty(OEntity entity, String name) { 
-		OProperty<Boolean> prop = entity.getProperty(name, Boolean.class);
-		return prop != null ? prop.getValue() : null; 
-	}
 
-	
-	static void assertEquals(byte[] expected, byte[] actual) {
-		if (expected == actual) return;	// handles identical arrays and both null
-		Assert.assertEquals(Arrays.toString(expected), Arrays.toString(actual));
-	}
-	static void assertEquals(double[] expected, double[] actual) {
-		if (expected == actual) return;	// handles identical arrays and both null
-		Assert.assertEquals(Arrays.toString(expected), Arrays.toString(actual));
-	}
-	static <T> void assertEquals(T[] expected, T[] actual) {
-		if (expected == actual) return;	// handles identical arrays and both null
-		Assert.assertEquals(Arrays.toString(expected), Arrays.toString(actual));
-	}
 	
 	static void compareToDb(Entity type, OEntity entity) {
-		// TODO
 		switch(type) {
 			case EXPERIMENT : {
-				Experiment fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Experiment fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getNotes(), 				getStringProperty(entity, "Notes"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getStartTime(), 			getDateTimeProperty(entity, "StartTime"));
-				Assert.assertEquals(fromDb.getEndTime(), 			getDateTimeProperty(entity, "EndTime"));
-				Assert.assertEquals(fromDb.getPurpose(), 			getStringProperty(entity, "Purpose"));
+				Assert.assertEquals(fromDb.getNotes(), 				OData4JClientUtils.getStringProperty(entity, "Notes"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getStartTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "StartTime"));
+				Assert.assertEquals(fromDb.getEndTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "EndTime"));
+				Assert.assertEquals(fromDb.getPurpose(), 			OData4JClientUtils.getStringProperty(entity, "Purpose"));
 
 				// TODO sub-entities - Set<String> ss  = fromDb.getAnnotationGroupTagSet();
 /*				
@@ -399,15 +375,15 @@ public class BasicGetTest {
 				break;
 			}
 			case ANALYSIS_RECORD : {
-				AnalysisRecord fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				AnalysisRecord fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getNotes(), 				getStringProperty(entity, "Notes"));
-				Assert.assertEquals(fromDb.getName(), 				getStringProperty(entity, "Name"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(),	getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getScmRevision(), 		getIntegerProperty(entity, "ScmRevision", Integer.MIN_VALUE));
-				Assert.assertEquals(fromDb.getEntryFunctionName(), 	getStringProperty(entity, "EntryFunctionName"));
+				Assert.assertEquals(fromDb.getNotes(), 				OData4JClientUtils.getStringProperty(entity, "Notes"));
+				Assert.assertEquals(fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(),	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getScmRevision(), 		OData4JClientUtils.getIntegerProperty(entity, "ScmRevision", Integer.MIN_VALUE));
+				Assert.assertEquals(fromDb.getEntryFunctionName(), 	OData4JClientUtils.getStringProperty(entity, "EntryFunctionName"));
 /*					
 					<NavigationProperty Name="Project" Relationship="Ovodata.FK_AnalysisRecords_Projects" FromRole="AnalysisRecords" ToRole="Projects"/>
 					<NavigationProperty Name="Tags" Relationship="Ovodata.FK_AnalysisRecords__Strings" FromRole="AnalysisRecords" ToRole="_Strings"/>
@@ -423,15 +399,15 @@ public class BasicGetTest {
 				break;
 			}
 			case DERIVED_RESPONSE : {
-				DerivedResponse fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				DerivedResponse fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getDescription(), 		getStringProperty(entity, "Description"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getName(), 				getStringProperty(entity, "Name"));
-				assertEquals(fromDb.getDataBytes(), 				getByteArrayProperty(entity, "DataBytes"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUnits(), 				getStringProperty(entity, "Units"));
+				Assert.assertEquals(fromDb.getDescription(), 		OData4JClientUtils.getStringProperty(entity, "Description"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+				JUnitUtils.assertEquals(fromDb.getDataBytes(), 		OData4JClientUtils.getByteArrayProperty(entity, "DataBytes"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUnits(), 				OData4JClientUtils.getStringProperty(entity, "Units"));
 /*					
 					<NavigationProperty Name="ExternalDevice" Relationship="Ovodata.FK_DerivedResponses_ExternalDevices" FromRole="DerivedResponses" ToRole="ExternalDevices"/>
 					<NavigationProperty Name="Epoch" Relationship="Ovodata.FK_DerivedResponses_Epochs" FromRole="DerivedResponses" ToRole="Epochs"/>
@@ -448,14 +424,14 @@ public class BasicGetTest {
 				break;
 			}
 			case EPOCH : {
-				Epoch fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Epoch fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getSerializedName(), 						getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getDuration(), 								getDoubleProperty(entity, "Duration"));
-				Assert.assertEquals(fromDb.getUuid(), 									getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), 					getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(Boolean.valueOf(fromDb.getExcludeFromAnalysis()),	getBooleanProperty(entity, "ExcludeFromAnalysis"));
-				Assert.assertEquals(fromDb.getProtocolID(),								getStringProperty(entity, "ProtocolID"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 						OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getDuration(), 								OData4JClientUtils.getDoubleProperty(entity, "Duration"));
+				Assert.assertEquals(fromDb.getUuid(), 									OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), 					OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(Boolean.valueOf(fromDb.getExcludeFromAnalysis()),	OData4JClientUtils.getBooleanProperty(entity, "ExcludeFromAnalysis"));
+				Assert.assertEquals(fromDb.getProtocolID(),								OData4JClientUtils.getStringProperty(entity, "ProtocolID"));
 /*					
 					<NavigationProperty Name="EpochGroup" Relationship="Ovodata.FK_Epochs_EpochGroups" FromRole="Epochs" ToRole="EpochGroups"/>
 					<NavigationProperty Name="PreviousEpoch" Relationship="Ovodata.FK_Epochs_Epochs" FromRole="Epochs" ToRole="Epochs1"/>
@@ -477,15 +453,15 @@ public class BasicGetTest {
 				break;
 			}
 			case EPOCH_GROUP : {
-				EpochGroup fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				EpochGroup fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getEpochCount(),			getIntegerProperty(entity, "EpochCount", -1));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getLabel(), 				getStringProperty(entity, "Label"));
-				Assert.assertEquals(fromDb.getStartTime(), 			getDateTimeProperty(entity, "StartTime"));
-				Assert.assertEquals(fromDb.getEndTime(), 			getDateTimeProperty(entity, "EndTime"));
+				Assert.assertEquals(fromDb.getEpochCount(),			OData4JClientUtils.getIntegerProperty(entity, "EpochCount", -1));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getLabel(), 				OData4JClientUtils.getStringProperty(entity, "Label"));
+				Assert.assertEquals(fromDb.getStartTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "StartTime"));
+				Assert.assertEquals(fromDb.getEndTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "EndTime"));
 
 /*				
 				<NavigationProperty Name="Parent" Relationship="Ovodata.FK_EpochGroups_EpochGroups" FromRole="EpochGroups" ToRole="EpochGroups1"/>
@@ -505,13 +481,13 @@ public class BasicGetTest {
 				break;
 			}
 			case EXTERNAL_DEVICE : {
-				ExternalDevice fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				ExternalDevice fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getName(), 				getStringProperty(entity, "Name"));
-				Assert.assertEquals(fromDb.getManufacturer(), 		getStringProperty(entity, "Manufacturer"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(),	getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+				Assert.assertEquals(fromDb.getManufacturer(), 		OData4JClientUtils.getStringProperty(entity, "Manufacturer"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(),	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
 
 /*					
 					<NavigationProperty Name="Experiment" Relationship="Ovodata.FK_ExternalDevices_Experiments" FromRole="ExternalDevices" ToRole="Experiments"/>
@@ -526,12 +502,12 @@ public class BasicGetTest {
 				break;
 			}
 			case KEYWORD_TAG : {
-				KeywordTag fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				KeywordTag fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getTag(), 				getStringProperty(entity, "Tag"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(),	getStringProperty(entity, "SerializedLocation"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getTag(), 				OData4JClientUtils.getStringProperty(entity, "Tag"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+//				Assert.assertEquals(fromDb.getSerializedLocation(),	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
 				
 /*					
 					<NavigationProperty Name="MyProperties" Relationship="Ovodata.FK_KeywordTags__MapEntries" FromRole="KeywordTags" ToRole="_MapEntries"/>
@@ -542,17 +518,17 @@ public class BasicGetTest {
 				break;
 			}
 			case PROJECT : {
-				String uriString = getStringProperty(entity, "URIString");
-				Project fromDb = getFromDB(uriString);
+				String URI = OData4JClientUtils.getStringProperty(entity, "URI");
+				Project fromDb = getFromDB(URI);
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(uriString, fromDb.getNotes(), 				getStringProperty(entity, "Notes"));
-				Assert.assertEquals(uriString, fromDb.getName(), 				getStringProperty(entity, "Name"));
-				Assert.assertEquals(uriString, fromDb.getSerializedName(), 		getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(uriString, fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(uriString, fromDb.getSerializedLocation(), 	getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(uriString, fromDb.getPurpose(), 			getStringProperty(entity, "Purpose"));
-				Assert.assertEquals(uriString, fromDb.getStartTime(), 			getDateTimeProperty(entity, "StartTime"));
-				Assert.assertEquals(uriString, fromDb.getEndTime(), 			getDateTimeProperty(entity, "EndTime"));
+				Assert.assertEquals(URI, fromDb.getNotes(), 				OData4JClientUtils.getStringProperty(entity, "Notes"));
+				Assert.assertEquals(URI, fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+//				Assert.assertEquals(URI, fromDb.getSerializedName(), 		OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(URI, fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(URI, fromDb.getSerializedLocation(), 	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(URI, fromDb.getPurpose(), 			OData4JClientUtils.getStringProperty(entity, "Purpose"));
+				Assert.assertEquals(URI, fromDb.getStartTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "StartTime"));
+				Assert.assertEquals(URI, fromDb.getEndTime(), 			OData4JClientUtils.getDateTimeProperty(entity, "EndTime"));
 
 /*				
 				<NavigationProperty Name="Experiments" Relationship="Ovodata.FK_Experiments_Projects" FromRole="Projects" ToRole="Experiments"/>
@@ -569,15 +545,15 @@ public class BasicGetTest {
 				break;
 			}
 			case RESOURCE : {
-				Resource fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Resource fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getNotes(), 				getStringProperty(entity, "Notes"));
-				Assert.assertEquals(fromDb.getName(), 				getStringProperty(entity, "Name"));
-				assertEquals(fromDb.getData(), 						getByteArrayProperty(entity, "Data"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getUti(), 				getStringProperty(entity, "Uti"));
+				Assert.assertEquals(fromDb.getNotes(), 				OData4JClientUtils.getStringProperty(entity, "Notes"));
+				Assert.assertEquals(fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+				JUnitUtils.assertEquals(fromDb.getData(), 			OData4JClientUtils.getByteArrayProperty(entity, "Data"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getUti(), 				OData4JClientUtils.getStringProperty(entity, "UTI"));
 /*					
 					<NavigationProperty Name="Tags" Relationship="Ovodata.FK_Resources__Strings" FromRole="Resources" ToRole="_Strings"/>
 					<NavigationProperty Name="MyProperties" Relationship="Ovodata.FK_Resources__MapEntries" FromRole="Resources" ToRole="_MapEntries"/>
@@ -590,108 +566,93 @@ public class BasicGetTest {
 				break;
 			}
 			case RESPONSE : {
-				Response fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Response fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
 				
-//				fromDb.getAnnotationGroupTags()
-/*
-getAnnotationGroupTags()
-getAnnotationGroupTagSet()
-getAnnotations()
-getAnnotations(String)
-getAnnotationsIterable()
-getAnnotationsIterable(String)
-getMyAnnotationGroupTags()
-getMyAnnotationGroupTagSet()
-getMyAnnotations()
-getMyAnnotations(String)
-getMyAnnotationsIterable()
-getMyAnnotationsIterable(String)
-getMyNoteAnnotations(String)
-getMyNoteAnnotationsIterable(String)
-getMyTimelineAnnotations(String)
-getMyTimelineAnnotationsIterable(String)
-getNoteAnnotations(String)
-getNoteAnnotationsIterable(String)
-getTimelineAnnotations(String)
-getTimelineAnnotationsIterable(String)
- */
-/*
-getData()
-getDataBytes()
-getDoubleData()
-getFloatData()
-getFloatingPointData()
-getIntData()
-getIntegerData()
-getMatlabShape()
-getNumericDataType()
-getShape()
- */
-/*
-getDeviceParameters()
-getDimensionLabels()
-getExternalDevice()
-getUnits()
- */
-/*
-getEpoch()
-getSamplingRates()
-getSamplingUnits()
-getSerializedLocation()
-getUTI()
- */
-/*
-getKeywordTags()
-getMyKeywordTags()
-getMyTags()
-getTags()
-getTagSet()
- */
-/*
-getMyProperties()
-getMyProperty(String)
-getOwner()
-getProperties()
-getProperty(String)
-getResource(String)
-getResourceNames()
-getResourcesIterable()
-getSerializedLocation()
-getSerializedName()
-getURI()
-getURIString()
-getUuid()
- */
-//				assertEquals(fromDb.getSamplingUnits(), 		getStringArrayProperty(entity, "SamplingUnits"));
-//				assertEquals(fromDb.getSamplingRates(), 		getDoubleArrayProperty(entity, "SamplingRates"));	// FIXME - this will fail (it's double[] in DB but Double in svc)
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				assertEquals(fromDb.getDataBytes(), 				getByteArrayProperty(entity, "DataBytes"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUnits(), 				getStringProperty(entity, "Units"));
-
-/*					
-					<NavigationProperty Name="ExternalDevice" Relationship="Ovodata.FK_Responses_ExternalDevices" FromRole="Responses" ToRole="ExternalDevices"/>
-					<NavigationProperty Name="Epoch" Relationship="Ovodata.FK_Responses_Epochs" FromRole="Responses" ToRole="Epochs"/>
-					<NavigationProperty Name="Tags" Relationship="Ovodata.FK_Responses__Strings" FromRole="Responses" ToRole="_Strings"/>
-					<NavigationProperty Name="MyProperties" Relationship="Ovodata.FK_Responses__MapEntries" FromRole="Responses" ToRole="_MapEntries"/>
-					<NavigationProperty Name="MyKeywordTags" Relationship="Ovodata.FK_Responses_KeywordTags" FromRole="Responses" ToRole="KeywordTags"/>
-					<NavigationProperty Name="MyTags" Relationship="Ovodata.FK_Responses__Strings" FromRole="Responses" ToRole="_Strings"/>
-					<NavigationProperty Name="DeviceParameters" Relationship="Ovodata.FK_Responses__MapEntries" FromRole="Responses" ToRole="_MapEntries"/>
-					<NavigationProperty Name="KeywordTags" Relationship="Ovodata.FK_Responses_KeywordTags" FromRole="Responses" ToRole="KeywordTags"/>
-					<NavigationProperty Name="Resources" Relationship="Ovodata.FK_Responses_Resources" FromRole="Responses" ToRole="Resources"/>
-					<NavigationProperty Name="Properties" Relationship="Ovodata.FK_Responses__MapEntries" FromRole="Responses" ToRole="_MapEntries"/>
+//				System.out.println("links - " + entity.getLinks());
+/*				
+links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Owner], 
+			ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NumericDataType,title=NumericDataType,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/NumericDataType], 
+			ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ExternalDevice], 
+			ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Epoch], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingUnits,title=SamplingUnits,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingUnits], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ResourceNames], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingRates,title=SamplingRates,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingRates], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatingPointData,title=FloatingPointData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatingPointData], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyTags], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatData,title=FloatData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatData], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DeviceParameters], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotationGroupTags], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Properties], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Tags], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotations], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Shape,title=Shape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Shape], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyProperties], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyKeywordTags],
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MatlabShape,title=MatlabShape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MatlabShape], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntData,title=IntData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntData], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/AnnotationGroupTags], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntegerData,title=IntegerData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntegerData], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DoubleData,title=DoubleData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DoubleData], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/KeywordTags], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DimensionLabels], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Annotations], 
+			ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Resources]]
 */
+				
+				// Properties
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getUnits(), 				OData4JClientUtils.getStringProperty(entity, "Units"));
+				Assert.assertEquals(fromDb.getUTI(), 				OData4JClientUtils.getStringProperty(entity, "UTI"));
+				Assert.assertEquals(fromDb.isIncomplete(), 			OData4JClientUtils.getBooleanProperty(entity, "IsIncomplete") == Boolean.TRUE);
+				Assert.assertEquals(fromDb.getURIString(), 			OData4JClientUtils.getStringProperty(entity, "URI"));
+				JUnitUtils.assertEquals(fromDb.getDataBytes(), 		OData4JClientUtils.getByteArrayProperty(entity, "Data"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+			
+//				User owner2 = 
+//				fromDb.getData();
+//				fromDb.getDoubleData();
+//				fromDb.getFloatData();
+//				fromDb.getFloatingPointData();
+//				fromDb.getIntegerData();
+
+				// Associated objects
+				Epoch 			epoch 	= fromDb.getEpoch();
+				OEntity svcEpoch = getSubEntity(Entity.EPOCH, entity, "Epoch"); //[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Epoch],
+				System.out.println("epoch    = " + epoch);
+				System.out.println("svcEpoch = " + svcEpoch);
+				
+				ExternalDevice 	dev 	= fromDb.getExternalDevice();
+				User			owner 	= fromDb.getOwner(); 
+				long[] mshape = fromDb.getMatlabShape();
+				NumericDataType ndtype = fromDb.getNumericDataType();
+				long[] shape = fromDb.getShape();
+				
+				
+				// Collections
+//				JUnitUtils.assertEquals(fromDb.getSamplingUnits(), 	OData4JClientUtils.getStringArrayProperty(entity, "SamplingUnits"));
+//				JUnitUtils.assertEquals(fromDb.getSamplingRates(), 	OData4JClientUtils.getDoubleArrayProperty(entity, "SamplingRates"));
+				fromDb.getDeviceParameters();
+	        // TaggableEntityBase
+				fromDb.getKeywordTags();
+				fromDb.getMyKeywordTags();
+				fromDb.getMyTags();
+				fromDb.getTags();
+	        // EntityBase
+				fromDb.getMyProperties();		// String,Object
+				fromDb.getProperties();			// String,Object[]
+				fromDb.getResourcesIterable();
+
 				break;
 			}
 			case SOURCE : {
-				Source fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Source fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(),	getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getLabel(), 				getStringProperty(entity, "Label"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(),	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getLabel(), 				OData4JClientUtils.getStringProperty(entity, "Label"));
 /*					
 					<NavigationProperty Name="Parent" Relationship="Ovodata.FK_Sources_Sources" FromRole="Sources" ToRole="Sources1"/>
 					<NavigationProperty Name="ParentRoot" Relationship="Ovodata.FK_Sources_Sources" FromRole="Sources" ToRole="Sources1"/>
@@ -711,13 +672,13 @@ getUuid()
 				break;
 			}
 			case STIMULUS : {
-				Stimulus fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				Stimulus fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUnits(), 				getStringProperty(entity, "Units"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(), getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getPluginID(), 			getStringProperty(entity, "PluginID"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUnits(), 				OData4JClientUtils.getStringProperty(entity, "Units"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getPluginID(), 			OData4JClientUtils.getStringProperty(entity, "PluginID"));
 /*					
 					<NavigationProperty Name="ExternalDevice" Relationship="Ovodata.FK_Stimuli_ExternalDevices" FromRole="Stimuli" ToRole="ExternalDevices"/>
 					<NavigationProperty Name="Epoch" Relationship="Ovodata.FK_Stimuli_Epochs" FromRole="Stimuli" ToRole="Epochs"/>
@@ -734,14 +695,14 @@ getUuid()
 				break;
 			}
 			case URL_RESOURCE : {
-				URLResource fromDb = getFromDB(getStringProperty(entity, "URIString"));
+				URLResource fromDb = getFromDB(OData4JClientUtils.getStringProperty(entity, "URI"));
 				Assert.assertNotNull(fromDb);
-				Assert.assertEquals(fromDb.getNotes(), 				getStringProperty(entity, "Notes"));
-				Assert.assertEquals(fromDb.getName(), 				getStringProperty(entity, "Name"));
-				Assert.assertEquals(fromDb.getSerializedName(), 	getStringProperty(entity, "SerializedName"));
-				Assert.assertEquals(fromDb.getUuid(), 				getStringProperty(entity, "UUID"));
-				Assert.assertEquals(fromDb.getSerializedLocation(),	getStringProperty(entity, "SerializedLocation"));
-				Assert.assertEquals(fromDb.getUti(), 				getStringProperty(entity, "Uti"));
+				Assert.assertEquals(fromDb.getNotes(), 				OData4JClientUtils.getStringProperty(entity, "Notes"));
+				Assert.assertEquals(fromDb.getName(), 				OData4JClientUtils.getStringProperty(entity, "Name"));
+//				Assert.assertEquals(fromDb.getSerializedName(), 	OData4JClientUtils.getStringProperty(entity, "SerializedName"));
+				Assert.assertEquals(fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(entity, "UUID"));
+				Assert.assertEquals(fromDb.getSerializedLocation(),	OData4JClientUtils.getStringProperty(entity, "SerializedLocation"));
+				Assert.assertEquals(fromDb.getUti(), 				OData4JClientUtils.getStringProperty(entity, "UTI"));
 /*					
 					<NavigationProperty Name="Tags" Relationship="Ovodata.FK_URLResources__Strings" FromRole="URLResources" ToRole="_Strings"/>
 					<NavigationProperty Name="MyProperties" Relationship="Ovodata.FK_URLResources__MapEntries" FromRole="URLResources" ToRole="_MapEntries"/>
@@ -765,766 +726,7 @@ getUuid()
 	<Property Name="EntityId" Type="Edm.String" Nullable="false"/>
 	<Property Name="value" Type="Edm.String" Nullable="true"/>
 </EntityType>
-* /
-
-<Association Name="FK_Experiments_Projects"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="*"/><End Role="Projects" Type="Ovodata.Projects" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments__Strings"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments__MapEntries"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_KeywordTags"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_EpochGroups"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments__Strings"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_ExternalDevices"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_Sources"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="*"/><End Role="Sources" Type="Ovodata.Sources" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_KeywordTags"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_Epochs"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments_Resources"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_Experiments__MapEntries"><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_EpochGroups"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="*"/><End Role="EpochGroups1" Type="Ovodata.EpochGroups" Multiplicity="1"/></Association>
-<Association Name="FK_EpochGroups_Sources"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="*"/><End Role="Sources" Type="Ovodata.Sources" Multiplicity="1"/></Association>
-<Association Name="FK_EpochGroups_Experiments"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="*"/><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="1"/></Association>
-<Association Name="FK_EpochGroups__Strings"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups__MapEntries"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_KeywordTags"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups__Strings"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_KeywordTags"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_Epochs"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_Epochs"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups_Resources"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_EpochGroups__MapEntries"><End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords_Projects"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="*"/><End Role="Projects" Type="Ovodata.Projects" Multiplicity="1"/></Association>
-<Association Name="FK_AnalysisRecords__Strings"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords__MapEntries"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords_KeywordTags"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords__Strings"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords_KeywordTags"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords_Epochs"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="*"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords_Resources"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords__MapEntries"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_AnalysisRecords__MapEntries"><End Role="AnalysisRecords" Type="Ovodata.AnalysisRecords" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Responses_ExternalDevices"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="*"/><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="1"/></Association>
-<Association Name="FK_Responses_Epochs"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="*"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="1"/></Association>
-<Association Name="FK_Responses__Strings"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Responses__MapEntries"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Responses_KeywordTags"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Responses__Strings"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Responses__MapEntries"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Responses_KeywordTags"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Responses_Resources"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_Responses__MapEntries"><End Role="Responses" Type="Ovodata.Responses" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices_Experiments"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="*"/><End Role="Experiments" Type="Ovodata.Experiments" Multiplicity="1"/></Association>
-<Association Name="FK_ExternalDevices__Strings"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices__MapEntries"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices_KeywordTags"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices__Strings"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices_KeywordTags"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices_Resources"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_ExternalDevices__MapEntries"><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Sources_Sources"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="*"/><End Role="Sources1" Type="Ovodata.Sources" Multiplicity="1"/></Association>
-<Association Name="FK_Sources_Sources"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="*"/><End Role="Sources1" Type="Ovodata.Sources" Multiplicity="1"/></Association>
-<Association Name="FK_Sources__Strings"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Sources__MapEntries"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_Sources_KeywordTags"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Sources__Strings"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_Sources_KeywordTags"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_Sources_Resources"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/></Association>
-<Association Name="FK_Sources__MapEntries"><End Role="Sources" Type="Ovodata.Sources" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_DerivedResponses_ExternalDevices"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="*"/><End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="1"/></Association>
-<Association Name="FK_DerivedResponses_Epochs"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="*"/><End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="1"/></Association>
-<Association Name="FK_DerivedResponses__Strings"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/><End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/></Association>
-<Association Name="FK_DerivedResponses__MapEntries"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_DerivedResponses_KeywordTags"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/><End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/></Association>
-<Association Name="FK_DerivedResponses__MapEntries"><End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/><End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/></Association>
-<Association Name="FK_DerivedResponses__Strings">
-<End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_DerivedResponses_KeywordTags">
-<End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_DerivedResponses_Resources">
-<End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" Type="Ovodata.DerivedResponses" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects__Strings">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects__MapEntries">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects_KeywordTags">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects__Strings">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects_KeywordTags">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects_Resources">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Projects__MapEntries">
-<End Role="Projects" Type="Ovodata.Projects" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources__Strings">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources__MapEntries">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources_KeywordTags">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources__Strings">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources_KeywordTags">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources_Resources">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_URLResources__MapEntries">
-<End Role="URLResources" Type="Ovodata.URLResources" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli_ExternalDevices">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="*"/>
-<End Role="ExternalDevices" Type="Ovodata.ExternalDevices" Multiplicity="1"/>
-</Association>
-<Association Name="FK_Stimuli_Epochs">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="*"/>
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="1"/>
-</Association>
-<Association Name="FK_Stimuli__Strings">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli__MapEntries">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli_KeywordTags">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli__MapEntries">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli__Strings">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli__MapEntries">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli_KeywordTags">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli_Resources">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Stimuli__MapEntries">
-<End Role="Stimuli" Type="Ovodata.Stimuli" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_KeywordTags__MapEntries">
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_KeywordTags__Strings">
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_KeywordTags_Resources">
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_KeywordTags__MapEntries">
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs_EpochGroups">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/>
-<End Role="EpochGroups" Type="Ovodata.EpochGroups" Multiplicity="1"/>
-</Association>
-<Association Name="FK_Epochs_Epochs">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/>
-<End Role="Epochs1" Type="Ovodata.Epochs" Multiplicity="1"/>
-</Association>
-<Association Name="FK_Epochs_Epochs">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="*"/>
-<End Role="Epochs1" Type="Ovodata.Epochs" Multiplicity="1"/>
-</Association>
-<Association Name="FK_Epochs__Strings">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs__MapEntries">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs__Strings">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs__MapEntries">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs_KeywordTags">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs__MapEntries">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs_KeywordTags">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="KeywordTags" Type="Ovodata.KeywordTags" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Epochs_Resources">
-<End Role="Epochs" Type="Ovodata.Epochs" Multiplicity="0..1"/>
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Resources__Strings">
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Resources__MapEntries">
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Resources__Strings">
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="0..1"/>
-<End Role="_Strings" Type="Ovodata._Strings" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Resources_Resources">
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="*"/>
-<End Role="Resources1" Type="Ovodata.Resources" Multiplicity="*"/>
-</Association>
-<Association Name="FK_Resources__MapEntries">
-<End Role="Resources" Type="Ovodata.Resources" Multiplicity="0..1"/>
-<End Role="_MapEntries" Type="Ovodata._MapEntries" Multiplicity="*"/>
-</Association>
-
-<EntityContainer Name="Container" m:IsDefaultEntityContainer="true">
-<EntitySet Name="Experiments" EntityType="Ovodata.Experiments"/>
-<EntitySet Name="EpochGroups" EntityType="Ovodata.EpochGroups"/>
-<EntitySet Name="_MapEntries" EntityType="Ovodata._MapEntries"/>
-<EntitySet Name="AnalysisRecords" EntityType="Ovodata.AnalysisRecords"/>
-<EntitySet Name="Responses" EntityType="Ovodata.Responses"/>
-<EntitySet Name="ExternalDevices" EntityType="Ovodata.ExternalDevices"/>
-<EntitySet Name="Sources" EntityType="Ovodata.Sources"/>
-<EntitySet Name="DerivedResponses" EntityType="Ovodata.DerivedResponses"/>
-<EntitySet Name="Projects" EntityType="Ovodata.Projects"/>
-<EntitySet Name="URLResources" EntityType="Ovodata.URLResources"/>
-<EntitySet Name="_Strings" EntityType="Ovodata._Strings"/>
-<EntitySet Name="Stimuli" EntityType="Ovodata.Stimuli"/>
-<EntitySet Name="KeywordTags" EntityType="Ovodata.KeywordTags"/>
-<EntitySet Name="Epochs" EntityType="Ovodata.Epochs"/>
-<EntitySet Name="Resources" EntityType="Ovodata.Resources"/>
-
-<AssociationSet Name="FK_Experiments_Projects" Association="Ovodata.FK_Experiments_Projects">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="Projects" EntitySet="Projects"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments__Strings" Association="Ovodata.FK_Experiments__Strings">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments__MapEntries" Association="Ovodata.FK_Experiments__MapEntries">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_KeywordTags" Association="Ovodata.FK_Experiments_KeywordTags">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_EpochGroups" Association="Ovodata.FK_Experiments_EpochGroups">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments__Strings" Association="Ovodata.FK_Experiments__Strings">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_ExternalDevices" Association="Ovodata.FK_Experiments_ExternalDevices">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_Sources" Association="Ovodata.FK_Experiments_Sources">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="Sources" EntitySet="Sources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_KeywordTags" Association="Ovodata.FK_Experiments_KeywordTags">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_Epochs" Association="Ovodata.FK_Experiments_Epochs">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments_Resources" Association="Ovodata.FK_Experiments_Resources">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Experiments__MapEntries" Association="Ovodata.FK_Experiments__MapEntries">
-<End Role="Experiments" EntitySet="Experiments"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_EpochGroups" Association="Ovodata.FK_EpochGroups_EpochGroups">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="EpochGroups1" EntitySet="EpochGroups"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_Sources" Association="Ovodata.FK_EpochGroups_Sources">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="Sources" EntitySet="Sources"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_Experiments" Association="Ovodata.FK_EpochGroups_Experiments">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="Experiments" EntitySet="Experiments"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups__Strings" Association="Ovodata.FK_EpochGroups__Strings">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups__MapEntries" Association="Ovodata.FK_EpochGroups__MapEntries">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_KeywordTags" Association="Ovodata.FK_EpochGroups_KeywordTags">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups__Strings" Association="Ovodata.FK_EpochGroups__Strings">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_KeywordTags" Association="Ovodata.FK_EpochGroups_KeywordTags">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_Epochs" Association="Ovodata.FK_EpochGroups_Epochs">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_Epochs" Association="Ovodata.FK_EpochGroups_Epochs">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups_Resources" Association="Ovodata.FK_EpochGroups_Resources">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_EpochGroups__MapEntries" Association="Ovodata.FK_EpochGroups__MapEntries">
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords_Projects" Association="Ovodata.FK_AnalysisRecords_Projects">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="Projects" EntitySet="Projects"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords__Strings" Association="Ovodata.FK_AnalysisRecords__Strings">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords__MapEntries" Association="Ovodata.FK_AnalysisRecords__MapEntries">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords_KeywordTags" Association="Ovodata.FK_AnalysisRecords_KeywordTags">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords__Strings" Association="Ovodata.FK_AnalysisRecords__Strings">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords_KeywordTags" Association="Ovodata.FK_AnalysisRecords_KeywordTags">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords_Epochs" Association="Ovodata.FK_AnalysisRecords_Epochs">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords_Resources" Association="Ovodata.FK_AnalysisRecords_Resources">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords__MapEntries" Association="Ovodata.FK_AnalysisRecords__MapEntries">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_AnalysisRecords__MapEntries" Association="Ovodata.FK_AnalysisRecords__MapEntries">
-<End Role="AnalysisRecords" EntitySet="AnalysisRecords"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses_ExternalDevices" Association="Ovodata.FK_Responses_ExternalDevices">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses_Epochs" Association="Ovodata.FK_Responses_Epochs">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses__Strings" Association="Ovodata.FK_Responses__Strings">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses__MapEntries" Association="Ovodata.FK_Responses__MapEntries">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses_KeywordTags" Association="Ovodata.FK_Responses_KeywordTags">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses__Strings" Association="Ovodata.FK_Responses__Strings">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses__MapEntries" Association="Ovodata.FK_Responses__MapEntries">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses_KeywordTags" Association="Ovodata.FK_Responses_KeywordTags">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses_Resources" Association="Ovodata.FK_Responses_Resources">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Responses__MapEntries" Association="Ovodata.FK_Responses__MapEntries">
-<End Role="Responses" EntitySet="Responses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices_Experiments" Association="Ovodata.FK_ExternalDevices_Experiments">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="Experiments" EntitySet="Experiments"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices__Strings" Association="Ovodata.FK_ExternalDevices__Strings">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices__MapEntries" Association="Ovodata.FK_ExternalDevices__MapEntries">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices_KeywordTags" Association="Ovodata.FK_ExternalDevices_KeywordTags">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices__Strings" Association="Ovodata.FK_ExternalDevices__Strings">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices_KeywordTags" Association="Ovodata.FK_ExternalDevices_KeywordTags">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices_Resources" Association="Ovodata.FK_ExternalDevices_Resources">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_ExternalDevices__MapEntries" Association="Ovodata.FK_ExternalDevices__MapEntries">
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources_Sources" Association="Ovodata.FK_Sources_Sources">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="Sources1" EntitySet="Sources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources_Sources" Association="Ovodata.FK_Sources_Sources">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="Sources1" EntitySet="Sources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources__Strings" Association="Ovodata.FK_Sources__Strings">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources__MapEntries" Association="Ovodata.FK_Sources__MapEntries">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources_KeywordTags" Association="Ovodata.FK_Sources_KeywordTags">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources__Strings" Association="Ovodata.FK_Sources__Strings">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources_KeywordTags" Association="Ovodata.FK_Sources_KeywordTags">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources_Resources" Association="Ovodata.FK_Sources_Resources">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Sources__MapEntries" Association="Ovodata.FK_Sources__MapEntries">
-<End Role="Sources" EntitySet="Sources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses_ExternalDevices" Association="Ovodata.FK_DerivedResponses_ExternalDevices">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses_Epochs" Association="Ovodata.FK_DerivedResponses_Epochs">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__Strings" Association="Ovodata.FK_DerivedResponses__Strings">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__MapEntries" Association="Ovodata.FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses_KeywordTags" Association="Ovodata.FK_DerivedResponses_KeywordTags">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__MapEntries" Association="Ovodata.FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__Strings" Association="Ovodata.FK_DerivedResponses__Strings">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__MapEntries" Association="Ovodata.FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses_KeywordTags" Association="Ovodata.FK_DerivedResponses_KeywordTags">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses_Resources" Association="Ovodata.FK_DerivedResponses_Resources">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_DerivedResponses__MapEntries" Association="Ovodata.FK_DerivedResponses__MapEntries">
-<End Role="DerivedResponses" EntitySet="DerivedResponses"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects__Strings" Association="Ovodata.FK_Projects__Strings">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects__MapEntries" Association="Ovodata.FK_Projects__MapEntries">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects_KeywordTags" Association="Ovodata.FK_Projects_KeywordTags">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects__Strings" Association="Ovodata.FK_Projects__Strings">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects_KeywordTags" Association="Ovodata.FK_Projects_KeywordTags">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects_Resources" Association="Ovodata.FK_Projects_Resources">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Projects__MapEntries" Association="Ovodata.FK_Projects__MapEntries">
-<End Role="Projects" EntitySet="Projects"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources__Strings" Association="Ovodata.FK_URLResources__Strings">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources__MapEntries" Association="Ovodata.FK_URLResources__MapEntries">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources_KeywordTags" Association="Ovodata.FK_URLResources_KeywordTags">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources__Strings" Association="Ovodata.FK_URLResources__Strings">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources_KeywordTags" Association="Ovodata.FK_URLResources_KeywordTags">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources_Resources" Association="Ovodata.FK_URLResources_Resources">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_URLResources__MapEntries" Association="Ovodata.FK_URLResources__MapEntries">
-<End Role="URLResources" EntitySet="URLResources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli_ExternalDevices" Association="Ovodata.FK_Stimuli_ExternalDevices">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="ExternalDevices" EntitySet="ExternalDevices"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli_Epochs" Association="Ovodata.FK_Stimuli_Epochs">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="Epochs" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__Strings" Association="Ovodata.FK_Stimuli__Strings">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__MapEntries" Association="Ovodata.FK_Stimuli__MapEntries">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli_KeywordTags" Association="Ovodata.FK_Stimuli_KeywordTags">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__MapEntries" Association="Ovodata.FK_Stimuli__MapEntries">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__Strings" Association="Ovodata.FK_Stimuli__Strings">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__MapEntries" Association="Ovodata.FK_Stimuli__MapEntries">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli_KeywordTags" Association="Ovodata.FK_Stimuli_KeywordTags">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli_Resources" Association="Ovodata.FK_Stimuli_Resources">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Stimuli__MapEntries" Association="Ovodata.FK_Stimuli__MapEntries">
-<End Role="Stimuli" EntitySet="Stimuli"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_KeywordTags__MapEntries" Association="Ovodata.FK_KeywordTags__MapEntries">
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_KeywordTags__Strings" Association="Ovodata.FK_KeywordTags__Strings">
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_KeywordTags_Resources" Association="Ovodata.FK_KeywordTags_Resources">
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_KeywordTags__MapEntries" Association="Ovodata.FK_KeywordTags__MapEntries">
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_EpochGroups" Association="Ovodata.FK_Epochs_EpochGroups">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="EpochGroups" EntitySet="EpochGroups"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_Epochs" Association="Ovodata.FK_Epochs_Epochs">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="Epochs1" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_Epochs" Association="Ovodata.FK_Epochs_Epochs">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="Epochs1" EntitySet="Epochs"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs__Strings" Association="Ovodata.FK_Epochs__Strings">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs__MapEntries" Association="Ovodata.FK_Epochs__MapEntries">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs__Strings" Association="Ovodata.FK_Epochs__Strings">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs__MapEntries" Association="Ovodata.FK_Epochs__MapEntries">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_KeywordTags" Association="Ovodata.FK_Epochs_KeywordTags">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs__MapEntries" Association="Ovodata.FK_Epochs__MapEntries">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_KeywordTags" Association="Ovodata.FK_Epochs_KeywordTags">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="KeywordTags" EntitySet="KeywordTags"/>
-</AssociationSet>
-<AssociationSet Name="FK_Epochs_Resources" Association="Ovodata.FK_Epochs_Resources">
-<End Role="Epochs" EntitySet="Epochs"/>
-<End Role="Resources" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Resources__Strings" Association="Ovodata.FK_Resources__Strings">
-<End Role="Resources" EntitySet="Resources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Resources__MapEntries" Association="Ovodata.FK_Resources__MapEntries">
-<End Role="Resources" EntitySet="Resources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-<AssociationSet Name="FK_Resources__Strings" Association="Ovodata.FK_Resources__Strings">
-<End Role="Resources" EntitySet="Resources"/>
-<End Role="_Strings" EntitySet="_Strings"/>
-</AssociationSet>
-<AssociationSet Name="FK_Resources_Resources" Association="Ovodata.FK_Resources_Resources">
-<End Role="Resources" EntitySet="Resources"/>
-<End Role="Resources1" EntitySet="Resources"/>
-</AssociationSet>
-<AssociationSet Name="FK_Resources__MapEntries" Association="Ovodata.FK_Resources__MapEntries">
-<End Role="Resources" EntitySet="Resources"/>
-<End Role="_MapEntries" EntitySet="_MapEntries"/>
-</AssociationSet>
-</EntityContainer>
-</Schema>
-</edmx:DataServices>
-</edmx:Edmx>
- */
+*/
 		}
 	}
 }
