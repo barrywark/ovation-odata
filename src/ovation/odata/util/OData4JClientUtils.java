@@ -1,9 +1,13 @@
 package ovation.odata.util;
 
+import java.util.AbstractMap;
 import java.util.List;
 
 import org.core4j.Enumerable;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.odata4j.consumer.ODataConsumer;
+import org.odata4j.core.OCollection;
 import org.odata4j.core.OEntity;
 import org.odata4j.core.OProperty;
 import org.odata4j.edm.EdmAssociation;
@@ -22,6 +26,64 @@ import org.odata4j.edm.EdmSimpleType;
 
 public class OData4JClientUtils {
 
+	public static String 	getStringProperty(OEntity entity, String name) { 
+		OProperty<String> prop = entity.getProperty(name, String.class);
+		return prop != null ? prop.getValue() : null; 
+	}
+/*	
+	public static String[] getStringArrayCollection(OEntity entity, String name) { 
+		String[] link = entity.getLink(name, String[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static double[] getDoubleArrayCollection(OEntity entity, String name) { 
+		OProperty<double[]> prop = entity.getProperty(name, double[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static float[] getFloatArrayCollection(OEntity entity, String name) { 
+		OProperty<String[]> prop = entity.getProperty(name, String[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static long[] getLongArrayCollection(OEntity entity, String name) { 
+		OProperty<double[]> prop = entity.getProperty(name, double[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static int[] getIntArrayCollection(OEntity entity, String name) { 
+		OProperty<String[]> prop = entity.getProperty(name, String[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+/*	
+	public static AbstractMap.SimpleImmutableEntry<String,String>[] getPropertyCollection(OEntity entity, String name) {
+		OCollection<OObject> col = entity.getLink(name, arg1)
+		OProperty<double[]> prop = entity.getProperty(name, double[].class);
+		return prop != null ? prop.getValue() : null; 
+	}	
+	
+*/	
+	public static DateTime getDateTimeProperty(OEntity entity, String name) { 
+		OProperty<LocalDateTime> prop = entity.getProperty(name, LocalDateTime.class);
+		return prop != null && prop.getValue() != null ? prop.getValue().toDateTime() : null; 
+	}
+	public static Integer  getIntegerProperty(OEntity entity, String name) { 
+		OProperty<Integer> prop = entity.getProperty(name, Integer.class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static int		getIntegerProperty(OEntity entity, String name, int def) {
+		Integer val = getIntegerProperty(entity, name);
+		return val != null ? val.intValue() : def;
+	}
+	public static byte[]	getByteArrayProperty(OEntity entity, String name) { 
+		OProperty<byte[]> prop = entity.getProperty(name, byte[].class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static Double	getDoubleProperty(OEntity entity, String name) { 
+		OProperty<Double> prop = entity.getProperty(name, Double.class);
+		return prop != null ? prop.getValue() : null; 
+	}
+	public static Boolean	getBooleanProperty(OEntity entity, String name) { 
+		OProperty<Boolean> prop = entity.getProperty(name, Boolean.class);
+		return prop != null ? prop.getValue() : null; 
+	}	
+	
     public static void report(String msg) {
         System.out.println(msg);
     }
