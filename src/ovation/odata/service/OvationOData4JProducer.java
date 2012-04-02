@@ -24,6 +24,7 @@ import org.odata4j.producer.inmemory.InMemoryProducer;
 import org.odata4j.producer.inmemory.PropertyModel;
 
 import ovation.odata.model.ExtendedPropertyModel;
+import ovation.odata.model.OvationModelBase;
 import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 import ovation.odata.util.OData4JServerUtils;
@@ -72,7 +73,7 @@ public class OvationOData4JProducer extends InMemoryProducer {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void registerHandlers() {
 		// register all the basic handlers
-		ExtendedPropertyModel.registerOvationModel();
+		OvationModelBase.registerOvationModel();
 		
 		// register all handlers with OData4J
 		Set<String> allEntityNames = ExtendedPropertyModel.getEntityNames();
