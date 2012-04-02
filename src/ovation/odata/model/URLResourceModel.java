@@ -56,7 +56,7 @@ public class URLResourceModel extends ExtendedPropertyModel<String,URLResource> 
 	public Object getPropertyValue(Object target, String propertyName) {
 		URLResource obj = (URLResource)target;
 		switch(PropertyName.valueOf(propertyName)) {
-			case Url:					return obj.getUrl(); 
+			case Url:					return obj.getURL(); 
 			// Resource
 			case Data:					return obj.getData();
 			case Name:					return obj.getName();

@@ -1,4 +1,3 @@
-*.class
-distrib/
-classes/
-dotcloud/
+classes/*
+*.war
+distrib/*.jar
