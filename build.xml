@@ -14,9 +14,10 @@
     <property name="jar.release"        value="ovodata.jar"/>
     <property name="war.release"        value="ovodata.war"/>
     <property name="war.release.root"   value="ROOT.war"/>
-    <property name="guava.jar.path"     value="${dir.lib}/guava-r09.jar"/>
+    <property name="guava.jar.path"     value="${dir.lib}/guava-10.0.1.jar"/>
     <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.5-bundle-custom.jar"/>
     <property name="ovation.jar.path"   value="${dir.lib}/ovation-1.1.jar"/>
+    <property name="javax.servlet.jar.path" value="${dir.lib}/javax.servlet-api-3.0.1.jar"/>
     
     <fileset id="set.jars" dir="${dir.lib}">
         <include name="guava-r09.jar" />
@@ -40,7 +41,7 @@
         <javac nowarn="no" fork="no" compiler="javac1.6" source="1.6" target="1.6" debug="yes" verbose="no" srcdir="${dir.src}" destdir="${dir.compile}" includeantruntime="false">
             <classpath>
                 <fileset refid="set.jars"/>
-                <filelist files="${dir.lib}/servlet-api-3.0.jar"/>
+                <filelist files="${javax.servlet.jar.path}"/>
             </classpath>
         </javac>
     </target>
