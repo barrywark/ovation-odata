@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/odata4j-0.5-bundle-custom.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ovation.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ovation-1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/catalina-7.0.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/guava-10.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javax.servlet-api-3.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
