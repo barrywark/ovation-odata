@@ -155,24 +155,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     
     /** @return entity that matches key or null if none */
     public V getEntityByKey(OEntityKey key) {
-        Iterator<V> itr = getEntityIterByUUID(key);
-        if (itr.hasNext() == false) {
-            _log.error("Unable to find Project with UUID " + key.toKeyStringWithoutParentheses());
-            return null;
-        }
-        V v = itr.next(); // the object we want.
-        if (itr.hasNext()) {
-            _log.error("Found multiple " + getEntityType() + " with UUID " + key.toKeyStringWithoutParentheses());
-        }
-        return v;
-    }
-    
-    @SuppressWarnings("unchecked")
-    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {	// FIXME Ovation-specific
-        String typeName = getTypeName();	// the type-name of V
-        String query     = "uuid == " + key.toKeyStringWithoutParentheses();
-        _log.info("executing type:'" + typeName + "', query:'" + query + "'");
-        return (Iterator<V>)DataContextCache.getThreadContext().query(typeName, query);
+        return (V)DataContextCache.getThreadContext().objectWithUUID(key.toKeyStringWithoutParentheses());
     }
     
     
