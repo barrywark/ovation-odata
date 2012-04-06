@@ -8,7 +8,7 @@ import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.realm.RealmBase;
 import org.apache.log4j.Logger;
 
-import ovation.odata.service.JerseyAuthenticator;
+import ovation.odata.service.AuthUtil;
 
 /**
  * NOTE - this class is here for safe-keeping - it is not used in the current code-base, but was 
@@ -36,7 +36,7 @@ public class OvationDBRealm extends RealmBase {
 
 	public Principal authenticate(String username, String credentials) {
 		try {
-			if (JerseyAuthenticator.setThreadContext(username, credentials)) {
+			if (AuthUtil.authenticateUser(username, credentials)) {
 				_log.trace("authenticated '" + username + "'");
 		        return new GenericPrincipal(username, credentials);
 		    }

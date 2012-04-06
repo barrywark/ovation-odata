@@ -6,9 +6,17 @@ import org.odata4j.producer.QueryInfo;
 import org.odata4j.producer.resources.CrossDomainResourceConfig;
 import org.odata4j.producer.resources.ODataResourceConfig;
 import org.odata4j.producer.server.JerseyServer;
-
+/* FIXME 0.6
+import org.odata4j.producer.resources.RootApplication;
+import org.odata4j.jersey.producer.resources.ODataApplication;
+import org.odata4j.jersey.producer.server.JerseyServer;
+*/
 import com.sun.jersey.api.container.filter.LoggingFilter;
 
+/**
+ * a set of utility methods useful to OData servers
+ * @author Ron
+ */
 public class OData4JServerUtils {
 
     public static void hostODataServer(String baseUri) {
@@ -24,6 +32,8 @@ public class OData4JServerUtils {
     
     public static JerseyServer startODataServer(String baseUri) {
         JerseyServer server = new JerseyServer(baseUri);
+//FIXME 0.6        server.setODataApplication(ODataApplication.class);
+//FIXME 0.6        server.setRootApplication(RootApplication.class);
         server.addAppResourceClasses(new ODataResourceConfig().getClasses());
         server.addRootResourceClasses(new CrossDomainResourceConfig().getClasses());
 

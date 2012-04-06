@@ -5,6 +5,13 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.core4j.CoreUtils;
+/* FIXME 0.6
+import org.odata4j.jersey.producer.resources.ODataApplication;
+import org.odata4j.jersey.producer.resources.ODataProducerProvider;
+import org.odata4j.jersey.producer.server.JerseyServer;
+import org.odata4j.producer.resources.RootApplication;
+import org.odata4j.producer.server.ODataServer;
+*/
 import org.odata4j.producer.ODataProducer;
 import org.odata4j.producer.resources.CrossDomainResourceConfig;
 import org.odata4j.producer.resources.ODataProducerProvider;
@@ -58,16 +65,22 @@ public class StandaloneJerseyServer {
 					return (List<HttpContext>) tmp;
 				}
 
+// FIXME 0.6				public ODataServer start() {
+// FIXME 0.6					ODataServer odServer = super.start();	//FIXME - changed with Odata4j 0.6 - need to re-test!!!
 				public void start() {
-					super.start();
+					super.start();				
+					//TODO QueryInfo -> EntityQueryInfo (how different?)
 					HttpServer server = CoreUtils.getFieldValue(this, "server", HttpServer.class);
 					Authenticator authenticator = new JerseyAuthenticator();
 					for (HttpContext ctx : getAllContexts(server)) {
 						ctx.setAuthenticator(authenticator);
 					}
+// FIXME 0.6					return odServer;
 				}				
 			};
 			
+// FIXME 0.6	        server.setODataApplication(ODataApplication.class);
+// FIXME 0.6	        server.setRootApplication(RootApplication.class);
 	        server.addAppResourceClasses(new ODataResourceConfig().getClasses());
 	        server.addRootResourceClasses(new CrossDomainResourceConfig().getClasses());
 	        
