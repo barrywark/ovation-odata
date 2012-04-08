@@ -1,15 +1,18 @@
 package ovation.odata.util;
 
-import java.util.AbstractMap;
 import java.util.List;
 
 import org.core4j.Enumerable;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.odata4j.consumer.ODataConsumer;
-import org.odata4j.core.OCollection;
 import org.odata4j.core.OEntity;
+import org.odata4j.core.OEntityGetRequest;
+import org.odata4j.core.OEntityKey;
 import org.odata4j.core.OProperty;
+import org.odata4j.core.OQueryRequest;
+import org.odata4j.core.ORelatedEntitiesLink;
+import org.odata4j.core.ORelatedEntityLink;
 import org.odata4j.edm.EdmAssociation;
 import org.odata4j.edm.EdmAssociationSet;
 import org.odata4j.edm.EdmComplexType;
@@ -82,6 +85,28 @@ public class OData4JClientUtils {
 	public static Boolean	getBooleanProperty(OEntity entity, String name) { 
 		OProperty<Boolean> prop = entity.getProperty(name, Boolean.class);
 		return prop != null ? prop.getValue() : null; 
+	}	
+	
+	public static OEntity getEntity(ODataConsumer client, String setName, String entityId) {
+		OEntityGetRequest<OEntity> req = client.getEntity(setName, OEntityKey.create(entityId));
+		return req.execute();
+	}
+	
+	public static Enumerable<OEntity> getAllEntities(ODataConsumer client, String setName) {
+		OQueryRequest<OEntity> req = client.getEntities(setName);
+		return req.execute();
+	}
+
+	public static OEntity getSubEntity(ODataConsumer client, OEntity entity, String name) {
+		ORelatedEntityLink link = entity.getLink(name, ORelatedEntityLink.class);
+		OEntityGetRequest<OEntity> req = client.getEntity(link);
+		return req.execute();
+	}	
+	
+	public static Enumerable<OEntity> getSubEntities(ODataConsumer client, OEntity entity, String name) {
+		ORelatedEntitiesLink link = entity.getLink(name, ORelatedEntitiesLink.class);
+		OQueryRequest<OEntity> req = client.getEntities(link);
+		return req.execute();
 	}	
 	
     public static void report(String msg) {
