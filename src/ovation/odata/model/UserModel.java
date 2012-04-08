@@ -7,8 +7,6 @@ import org.core4j.Func;
 import org.core4j.Func1;
 
 import ovation.User;
-import ovation.odata.util.CollectionUtils;
-import ovation.odata.util.DataContextCache;
 
 import com.google.common.collect.Maps;
 
@@ -38,8 +36,7 @@ public class UserModel extends OvationModelBase<String,User> {
 			public Iterable<User> apply() { 
 				final Iterable<User> queryIter = executeQueryInfo();
 				if (queryIter != null) { return queryIter; }
-		    	return CollectionUtils.makeIterable(DataContextCache.getThreadContext().getUsersIterator());
-//				return executeQuery(GET_ALL_PQL); 
+				return executeQuery(GET_ALL_PQL); 
 			} 
 		};
 	}
