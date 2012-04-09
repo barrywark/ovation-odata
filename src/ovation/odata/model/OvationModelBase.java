@@ -788,24 +788,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 	    	default:		return getCollection((ITaggableEntityBase)obj, col); 
     	}
     }
-
     
-    
-
-/*
-    protected static Object getProperty(Project obj, PropertyName prop) {
-    	switch (prop) {
-	    	case SerializedLocation:	return obj.getSerializedLocation();
-	    	default: 					return getProperty((ITimelineElement)obj, prop); 
-    	}
-    }    
-    protected static Iterable<?> getCollection(Project obj, CollectionName col) {
-    	switch (col) {
-    		case AnalysisRecordNames:	return CollectionUtils.makeIterable(obj.getAnalysisRecordNames());
-	    	default: 					return getCollection((ITimelineElement)obj, col); 
-    	}
-    }
- */
     /* cast the Value type to a type which subclasses IEntityBase
      * @throws ClassCastException if the value-type doesn't extended from Ovations IEntityBase
      */
@@ -854,6 +837,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	return DataContextCache.getThreadContext().objectWithURI(uri);
     }
 
-	static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
-	static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
+	public static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
+	public static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
 }
