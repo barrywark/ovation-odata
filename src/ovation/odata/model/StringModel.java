@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.core4j.Func;
 import org.core4j.Func1;
+import org.odata4j.core.OEntityKey;
 
 import ovation.odata.util.CollectionUtils;
 
@@ -49,5 +50,10 @@ public class StringModel extends ExtendedPropertyModel<String,String> {
 
 	public Func1<String,String> idGetter() { 
 		return new Func1<String,String>() { public String apply(String record) { _log.error("trying to get key out of '" + record + "'"); return ""; } };
+	}
+	@Override
+	public String getEntityByKey(OEntityKey key) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

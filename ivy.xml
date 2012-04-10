@@ -1,0 +1,19 @@
+<ivy-module version="2.0">
+    <info organisation="com.physionconsulting" module="ovation.odata"/>
+    <dependencies>
+
+        <!-- Production -->
+        <dependency org="log4j" name="log4j" rev="1.2.16"/>
+        <dependency org="com.google.guava" name="guava" rev="10.0.1"/>
+        <dependency org="org.apache.tomcat" name="tomcat-catalina-ant" rev="7.0.21"/>
+        <dependency org="javax.servlet" name="javax.servlet-api" rev="3.0.1"/>
+
+        <!--Building-->
+
+        <!-- Testing -->
+        <dependency org="junit" name="junit" rev="4.9"/>
+
+        <!-- Unmanaged dependencies -->
+        <!-- jeldoclet, expression-tree-utils (+clojure), ovpredicate -->
+    </dependencies>
+</ivy-module>

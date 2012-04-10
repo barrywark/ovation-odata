@@ -116,19 +116,23 @@ public class PopulateTestDBData {
 								params.put("k1", "v1");
 								params.put("k2", 3.2);
 
+								String[] dimensionLabels = {};
 								epoch.insertStimulus(dev,
 									params,
 									"insertionStress.stimulus",
 									params,
-									"units");
+									"units",
+									dimensionLabels);	// FIXME
 
 								NumericData data = new NumericData(rawData);
 								epoch.insertResponse(dev,
 									params,
 									data,
 									"V",
+									"dimensionUnit",	// FIXME
 									100,
-									"Hz");
+									"Hz",
+									"dataUti");			// FIXME
 
 								epoch.addTag("hello");
 								epoch.addTag("OData!");

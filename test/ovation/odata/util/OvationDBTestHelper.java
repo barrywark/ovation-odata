@@ -13,8 +13,10 @@ import ovation.Experiment;
 import ovation.ExternalDevice;
 import ovation.NumericData;
 import ovation.Ovation;
+import ovation.OvationException;
 import ovation.Project;
 import ovation.Source;
+import ovation.UserAuthenticationException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -28,7 +30,7 @@ public class OvationDBTestHelper {
 	public static DataContext getContext(String uid, String passwd) throws Exception {
 		return getContext(uid, passwd, System.getProperty("dataContext.file", "/var/lib/ovation/db/dev.connection"));
 	}
-	public static DataContext getContext(String uid, String passwd, String dbConFile) throws Exception {
+	public static DataContext getContext(String uid, String passwd, String dbConFile) throws OvationException, UserAuthenticationException {
 		return Ovation.connect(dbConFile, uid, passwd);
 	}
 	
@@ -123,6 +125,7 @@ public class OvationDBTestHelper {
 		private static int _instance = 0;
 		private String 						_pluginId 		= "Stimulus Plugin " + ++_instance;
 		private String						_units			= "unitless";
+		private String[]					_dimLabels		= {"dimless"};
 		private final Map<String, Object> 	_deviceParams 	= Maps.newHashMap();
 		private final Map<String, Object> 	_params 		= Maps.newHashMap();
 		
@@ -143,6 +146,8 @@ public class OvationDBTestHelper {
 		private String						_units			= "unitless";
 		private double						_sampleRate		= 42.0;
 		private String						_sampleRateUnits= "eons";
+		private String						_dimLabel		= "dimless";
+		private String						_dataUti		= "dUti";
 		private final Map<String, Object> 	_deviceParams 	= Maps.newHashMap();
 		
 		public ResponseData data(double[] data, String units)		{ _data = data; _units = units; return this; }
@@ -156,7 +161,7 @@ public class OvationDBTestHelper {
 	 * @param context
 	 * @param projects
 	 */
-	public static void insertFixture(DataContext context, List<ProjectData> projects) throws Exception {
+	public static void insertFixture(DataContext context, List<ProjectData> projects) {
 		for (ProjectData proj : projects) {
 			Project p = context.insertProject(proj._name, proj._purpose, proj._startDate, proj._endDate);
 			for (ExperimentData ex : proj._experiments) {
@@ -171,6 +176,7 @@ public class OvationDBTestHelper {
 					Source cell = exp.insertSource(c._label);
 					for (EpochGroupData g : c._epochGroups) {
 						context.beginTransaction();
+						boolean transactionCommited = false;
 						try {
 							EpochGroup group = exp.insertEpochGroup(cell, g._label, g._startDate, g._endDate);
 							for (EpochData e : g._epochs) {
@@ -181,11 +187,11 @@ public class OvationDBTestHelper {
 									if (pair != null) {
 										StimulusData stim = pair._stimulus;
 										if (stim != null) {
-											epoch.insertStimulus(dev, stim._deviceParams, stim._pluginId, stim._params, stim._units);
+											epoch.insertStimulus(dev, stim._deviceParams, stim._pluginId, stim._params, stim._units, stim._dimLabels);
 										}
 										ResponseData resp = pair._response;
 										if (resp != null) {
-											epoch.insertResponse(dev, resp._deviceParams, new NumericData(resp._data), resp._units, resp._sampleRate, resp._sampleRateUnits);
+											epoch.insertResponse(dev, resp._deviceParams, new NumericData(resp._data), resp._units, resp._dimLabel, resp._sampleRate, resp._sampleRateUnits, resp._dataUti);
 										}
 									}
 								}
@@ -195,10 +201,12 @@ public class OvationDBTestHelper {
 							}
 							// only commit if nothing went wrong
 							context.commitTransaction();
-						} catch (Exception e) {
-							_log.error(e, e);
-							context.abortTransaction();
-							throw e;
+							transactionCommited = true;
+						} finally {
+							// make sure we either commit or roll back
+							if (transactionCommited == false) {
+								context.abortTransaction();
+							}
 						}
 					}
 				}

@@ -1,3 +1,10 @@
 classes/*
 *.war
 distrib/*.jar
+*.orig
+.ant
+lib/
+
+#IntelliJ
+workspace.xml
+out/

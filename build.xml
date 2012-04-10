@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="OvoData" default="all">
+<project xmlns:ivy="antlib:org.apache.ivy.ant"
+         name="OvoData"
+         default="all">
     <description>Ovation OData Web-service</description>
 
     <property name="dir.src"            value="${basedir}/src"/>
@@ -11,11 +13,11 @@
     <property name="dir.dotcloud"       value="${basedir}/dotcloud/odata"/>
     <property name="jar.release"        value="ovodata.jar"/>
     <property name="war.release"        value="ovodata.war"/>
-    <!-- TODO think about these props... -->
-<!--    <property name="war.release.root"   value="ROOT.war"/> -->
-    <property name="guava.jar.path"     value="${dir.lib}/guava-r09.jar"/>
+    <property name="war.release.root"   value="ROOT.war"/>
+    <property name="guava.jar.path"     value="${dir.lib}/guava-10.0.1.jar"/>
     <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.5-bundle-custom.jar"/>
     <property name="ovation.jar.path"   value="${dir.lib}/ovation-1.1.jar"/>
+    <property name="javax.servlet.jar.path" value="${dir.lib}/javax.servlet-api-3.0.1.jar"/>
     
     <fileset id="set.jars" dir="${dir.lib}">
         <include name="guava-r09.jar" />
@@ -31,7 +33,7 @@
         <delete dir="${dir.distrib}" failonerror="no"/>
     </target>
 
-    <target name="init" depends="" description="build war">
+    <target name="init" depends="resolve" description="build war">
         <mkdir dir="${dir.compile}"/>        
     </target>
 
@@ -39,48 +41,71 @@
         <javac nowarn="no" fork="no" compiler="javac1.6" source="1.6" target="1.6" debug="yes" verbose="no" srcdir="${dir.src}" destdir="${dir.compile}" includeantruntime="false">
             <classpath>
                 <fileset refid="set.jars"/>
-                <filelist files="${dir.lib}/servlet-api-3.0.jar"/>
+                <filelist files="${javax.servlet.jar.path}"/>
             </classpath>
         </javac>
     </target>
 
     <target name="jar" depends="compile" description="build war">
-        <mkdir dir="${dir.3rdparty-tmp}"/>
-        <!-- extract all the files in the jars and then repackage into release jar -->
-        <unjar dest="${dir.3rdparty-tmp}" overwrite="true">
-            <fileset refid="set.jars"/>
-        </unjar>
         <mkdir dir="${dir.distrib}"/>
         <jar jarfile="${dir.distrib}/${jar.release}">
-            <fileset dir="${dir.3rdparty-tmp}">
-                <exclude name="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*"/>
-            </fileset>
             <fileset dir="${dir.compile}"/>
             <manifest>
                 <attribute name="Main-Class" value="ovation.odata.service.StandaloneJerseyServer"/>
             </manifest>
-<!-- TODO think about this... what's the purpose of these lines? -->
-            <zipfileset includes="**/*" src="${ovation.jar.path}"/>
-            <zipfileset includes="**/*" src="${odata4j.jar.path}"/>
-            <zipfileset includes="**/*" src="${guava.jar.path}"/>
+        	<!-- we have to exclude any rsa signature files and manifests - the rest i remove just to keep things focussed and the jar smaller -->
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${ovation.jar.path}"/>
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${odata4j.jar.path}"/>
+            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${guava.jar.path}"/>
         </jar>
-        <delete dir="${dir.3rdparty-tmp}"/>
     </target>
 
     <target name="war" depends="jar" description="build war">
         <war basedir="${dir.war}" includes="**/*" warfile="${dir.distrib}/${war.release}">
             <lib file="${dir.distrib}/${jar.release}"/>
         </war>
-        <copy file="${dir.distrib}/${war.release}" tofile="${dir.dotcloud}/ROOT.war"/>
-<!-- isn't this the same as copying the war above?  not sure why this target is here, tho.  typically it's easier to call it ROOT.war 
-when you copy it (or better yet, symlink it) in the tomcat/webapps directory.            
-        <war basedir="${dir.war}" includes="**/*" warfile="${dir.dotcloud}/${war.release.root}">
-               <lib file="${dir.distrib}/${jar.release}"/>
-        </war>
--->        
+        <copy file="${dir.distrib}/${war.release}" tofile="${dir.dotcloud}/${war.release.root}"/>
     </target>
     
     <target name="runserver" depends="jar" description="run test server">
         <exec executable="${basedir}/run_server"/>
+    </target>
+
+    <!--IVY-->
+    <property environment="env"/>
+    <property name="ivy.install.version" value="2.2.0"/>
+    <condition property="ivy.home" value="${env.IVY_HOME}">
+        <isset property="env.IVY_HOME"/>
+    </condition>
+    <property name="ivy.home" value="${basedir}/.ant"/>
+    <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+    <target name="download-ivy" unless="offline">
+
+        <mkdir dir="${ivy.jar.dir}"/>
+        <!-- download Ivy from web site so that it can be used even without any special installation -->
+        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${ivy.jar.file}" usetimestamp="true"/>
+    </target>
+
+    <target name="init-ivy" depends="download-ivy">
+        <!-- try to load ivy here from ivy home, in case the user has not already dropped
+it into ant's lib dir (note that the latter copy will always take precedence).
+We will not fail as long as local lib dir exists (it may be empty) and
+ivy is in at least one of ant's lib dir or the local lib dir. -->
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>
+
+    <target name="resolve"
+            description="--> retrieve dependencies with ivy"
+            depends="init-ivy"
+            >
+        <ivy:retrieve/>
     </target>
 </project>

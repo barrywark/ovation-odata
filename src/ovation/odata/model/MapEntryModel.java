@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.core4j.Func;
 import org.core4j.Func1;
+import org.odata4j.core.OEntityKey;
 
 import ovation.odata.model.dao.MapEntry;
 import ovation.odata.util.CollectionUtils;
@@ -53,5 +54,10 @@ public class MapEntryModel extends ExtendedPropertyModel<String,MapEntry> {
 
 	public Func1<MapEntry,String> idGetter() { 
 		return new Func1<MapEntry,String>() { public String apply(MapEntry record) { _log.error("trying to get key out of '" + record + "'"); return ""; } };
+	}
+	@Override
+	public MapEntry getEntityByKey(OEntityKey key) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

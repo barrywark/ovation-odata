@@ -13,6 +13,7 @@ import org.odata4j.core.OEntityKey;
 import org.odata4j.edm.EdmDataServices;
 import org.odata4j.edm.EdmEntitySet;
 import org.odata4j.producer.EntitiesResponse;
+// FIXME 0.6 import org.odata4j.producer.EntityQueryInfo;
 import org.odata4j.producer.EntityResponse;
 import org.odata4j.producer.ODataProducer;
 import org.odata4j.producer.ODataProducerFactory;
@@ -23,6 +24,7 @@ import org.odata4j.producer.inmemory.InMemoryProducer;
 import org.odata4j.producer.inmemory.PropertyModel;
 
 import ovation.odata.model.ExtendedPropertyModel;
+import ovation.odata.model.OvationModelBase;
 import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 import ovation.odata.util.OData4JServerUtils;
@@ -71,7 +73,7 @@ public class OvationOData4JProducer extends InMemoryProducer {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void registerHandlers() {
 		// register all the basic handlers
-		ExtendedPropertyModel.registerOvationModel();
+		OvationModelBase.registerOvationModel();
 		
 		// register all handlers with OData4J
 		Set<String> allEntityNames = ExtendedPropertyModel.getEntityNames();
@@ -159,7 +161,7 @@ public class OvationOData4JProducer extends InMemoryProducer {
      * @return the matching entity
      */
 	@Override
-	public EntityResponse getEntity(String entitySetName, OEntityKey entityKey, QueryInfo queryInfo) {
+	public EntityResponse getEntity(String entitySetName, OEntityKey entityKey, QueryInfo queryInfo) {	// FIXME 0.6 EntityQueryInfo
 		if (_log.isDebugEnabled()) {
 			_log.debug("getEntity(set:" + entitySetName + ", key:" + entityKey + ", queryInfo:{" + OData4JServerUtils.toString(queryInfo) + "}");
 		}
