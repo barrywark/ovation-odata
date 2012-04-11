@@ -24,7 +24,7 @@ import ovation.ITaggableEntityBase;
 import ovation.ITimelineElement;
 import ovation.KeywordTag;
 import ovation.NumericData;
-import ovation.NumericDataType;
+import ovation.NumericDataFormat;
 import ovation.Project;
 import ovation.Resource;
 import ovation.Response;
@@ -32,22 +32,23 @@ import ovation.Source;
 import ovation.Stimulus;
 import ovation.URLResource;
 import ovation.User;
+import ovation.odata.model.dao.PrimitiveCollectionModel;
 import ovation.odata.model.dao.Property;
 import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 
 
 public abstract class OvationModelBase<K,V extends IEntityBase> extends ExtendedPropertyModel<K,V> {
-    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type - FIXME Ovation-specific
+    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type
 
     protected OvationModelBase(Map<String,Class<?>> fieldTypes, Map<String,Class<?>> collectionTypes) {
     	super(fieldTypes, collectionTypes);
     }
-
-	// rules of thumb -
-	// collections (association) can ONLY refer to other entity types
+    
+	// rules of thumb - 
+	// collections (association) can ONLY refer to other entity types 
 	// properties (aggregation) can refer to primitive types and entity types
-
+    
     /** register model handlers for all Ovation API model classes */
     public static void registerOvationModel() {
     	// top-level types
@@ -64,93 +65,100 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         ExtendedPropertyModel.addPropertyModel(new SourceModel());
         ExtendedPropertyModel.addPropertyModel(new StimulusModel());
         ExtendedPropertyModel.addPropertyModel(new URLResourceModel());
-        ExtendedPropertyModel.addPropertyModel(new UserModel());
-
+        ExtendedPropertyModel.addPropertyModel(new UserModel());		
+        
         // supporting types
         ExtendedPropertyModel.addPropertyModel(new StringModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new DoubleModel());		// so we can return a collection of doubles (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new FloatModel());		// so we can return a collection of floats (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new IntegerModel());		// so we can return a collection of integers (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new LongModel());		// so we can return a collection of longs (they may have fixed this in odata4j 0.6)
+//TODO        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<String>(String.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Double>(Double.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Float>(Float.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Integer>(Integer.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Long>(Long.class));
 
         ExtendedPropertyModel.addPropertyModel(new Property.Model());	// so we can return string-string pairs
-// FIXME        ExtendedPropertyModel.addPropertyModel(new NumericDataModel());
-        ExtendedPropertyModel.addPropertyModel(new NumericDataTypeModel());
-
+        
         ExtendedPropertyModel.addPropertyModel(new ITaggableEntityBaseModel());	// dunno about this idea but we have a collection of base-types
         ExtendedPropertyModel.addPropertyModel(new IAnnotationModel());
     }
-
-    // note, these two enums feel like they could be expanded to also have the getters but doing so would take a
+    
+    // note, these two enums feel like they could be expanded to also have the getters but doing so would take a 
     // fair amount of time (tho might result in a very nice expendable design...)
 
+    interface NameEnum {
+        public Class<?> getType();
+    }
+    
     /** every property of every child-type - ensures consistent naming and also makes common util functions doable */
-    protected enum PropertyName     {
+    protected enum PropertyName implements NameEnum {
         Owner(User.class), URI(String.class), UUID(String.class), IsIncomplete(Boolean.class),				// EntityBase
-        Tag(String.class),	 																				// KeywordTag
-        																									// TaggableEntityBase
-        																									// AnnotatableEntityBase
-        EntryFunctionName(String.class), Name(String.class), Notes(String.class), Project(Project.class),
+        Tag(String.class),	 																				// KeywordTag 
+        																									// TaggableEntityBase 
+        																									// AnnotatableEntityBase 
+        EntryFunctionName(String.class), Name(String.class), Notes(String.class), Project(Project.class), 
         ScmRevision(String.class), ScmURL(String.class), SerializedLocation(String.class), 					// AnalysisRecord
-        Experiment(Experiment.class), Manufacturer(String.class),  											// ExternalDevice + Name(String.class), SerializedLocation(String.class),
-        Label(String.class), ParentSource(Source.class), ParentRoot(Source.class),  						// Source + SerializedLocation(String.class),
-        Data(byte[].class), UTI(String.class), 																// Resource + Name(String.class), Notes(String.class),
+        Experiment(Experiment.class), Manufacturer(String.class),  											// ExternalDevice + Name(String.class), SerializedLocation(String.class), 		
+        Label(String.class), ParentSource(Source.class), ParentRoot(Source.class),  						// Source + SerializedLocation(String.class), 				
+        Data(byte[].class), UTI(String.class), 																// Resource + Name(String.class), Notes(String.class),  			
         URL(String.class), 																					// URLResource
         ExternalDevice(ExternalDevice.class), Units(String.class), 											// IOBase
-        Epoch(Epoch.class), PluginID(String.class),  														// Stimulus + SerializedLocation(String.class),
-        NumericData(NumericData.class), NumericDataType(NumericDataType.class), 							// ResponseDataBase
-        																									// Response + Epoch(ovation.Epoch.class), SerializedLocation(String.class), UTI(String.class),
-        Description(String.class), 																			// DerivedResponse + Epoch(Epoch.class), Name(String.class), SerializedLocation(String.class),
-        EndTime(LocalDateTime.class), StartTime(LocalDateTime.class), 										// TimelineElement
-        EpochCount(Integer.class), ParentEpochGroup(EpochGroup.class), Source(Source.class),				// EpochGroup + Experiment(ovation.Experiment.class), Label(String.class), SerializedLocation(String.class),
-        Duration(Double.class), EpochGroup(EpochGroup.class), ExcludeFromAnalysis(Boolean.class),
+        Epoch(Epoch.class), PluginID(String.class),  														// Stimulus + SerializedLocation(String.class), 			
+//        NumericData(NumericData.class), NumericDataType(NumericDataType.class), 							// ResponseDataBase 	
+        																									// Response + Epoch(ovation.Epoch.class), SerializedLocation(String.class), UTI(String.class), 										 			
+        Description(String.class), 																			// DerivedResponse + Epoch(Epoch.class), Name(String.class), SerializedLocation(String.class), 			 		
+        EndTime(LocalDateTime.class), StartTime(LocalDateTime.class), 										// TimelineElement 		
+        EpochCount(Integer.class), ParentEpochGroup(EpochGroup.class), Source(Source.class),				// EpochGroup + Experiment(ovation.Experiment.class), Label(String.class), SerializedLocation(String.class),   			
+        Duration(Double.class), EpochGroup(EpochGroup.class), ExcludeFromAnalysis(Boolean.class), 
         NextEpoch(Epoch.class), PreviousEpoch(Epoch.class), ProtocolID(String.class),						// Epoch + SerializedLocation(String.class)
         Purpose(String.class),																				// PurposeAndNotesEntity + Notes(String.class),
         																									// Experiment + SerializedLocation(String.class)
          																									// Project + Name(String.class), SerializedLocation(String.class)
         Username(String.class),																				// User
         Text(String.class),																					// IAnnotation
+        
+        
+    	ByteOrder(String.class), NumericDataFormat(String.class), NumericByteOrder(String.class), SampleBytes(Short.class), // NumericDataType
+    	;
+        
+    	final Class<?> 	_type;
+    	PropertyName(Class<?> type)	{ _type = type; }
 
-
-    	ByteOrder(String.class), Format(String.class), NumericByteOrder(String.class), SampleBytes(Short.class) // NumericDataType
-        ;
-
-    	final Class<?> _type;
-    	PropertyName(Class<?> type) { _type = type; }
-    	// ideas - base-class for both CollectionName and PropertyName enums, getter method factories (takes some work off model and adds consistency and centralizes code)
+        public Class<?> getType() 				{ return _type; }
     };
-
+    
     /** every collection (association) of every child-type - ensures consistent naming */
-    protected enum CollectionName {
+    protected enum CollectionName implements NameEnum {
         MyProperties(Property.class), Owner(User.class), Properties(Property.class), ResourceNames(String.class), Resources(Resource.class),		// EntityBase
-        Tagged(ITaggableEntityBase.class),																											// KeywordTag
-        KeywordTags(KeywordTag.class), MyKeywordTags(KeywordTag.class), MyTags(String.class), Tags(String.class),									// TaggableEntityBase
+        Tagged(ITaggableEntityBase.class),																											// KeywordTag 			
+        KeywordTags(KeywordTag.class), MyKeywordTags(KeywordTag.class), MyTags(String.class), Tags(String.class),									// TaggableEntityBase 
         AnnotationGroupTags(String.class), Annotations(IAnnotation.class), MyAnnotationGroupTags(String.class), MyAnnotations(IAnnotation.class),	// AnnotatableEntityBase
         AnalysisParameters(Property.class), Epochs(Epoch.class), 																					// AnalysisRecord
         																																			// ExternalDevice
-        AllEpochGroups(EpochGroup.class), AllExperiments(Experiment.class), ChildLeafSourceDescendants(Source.class), SourceChildren(Source.class),
+        AllEpochGroups(EpochGroup.class), AllExperiments(Experiment.class), ChildLeafSourceDescendants(Source.class), SourceChildren(Source.class), 
         EpochGroups(EpochGroup.class), Experiments(Experiment.class), 																				// Source
         																																			// Resource
         																																			// URLResource
         DeviceParameters(Property.class), DimensionLabels(String.class),																			// IOBase
         StimulusParameters(Property.class), 																										// Stimulus
-        DoubleData(Double.class), FloatData(Float.class), FloatingPointData(Double.class), IntData(Integer.class), IntegerData(Integer.class),
+        DoubleData(Double.class), FloatData(Float.class), FloatingPointData(Double.class), IntData(Integer.class), IntegerData(Integer.class), 
+        ShortIntData(Short.class), UnsignedIntData(Long.class),																						// NumericDataType																
         MatlabShape(Long.class), Shape(Long.class),																									// ResponseDataBase
         SamplingRates(Double.class), SamplingUnits(String.class), 																					// Response
         DerivationParameters(Property.class), 																										// DerivedResponse
         																																			// TimelineElement
-        ChildLeafGroupDescendants(EpochGroup.class), GroupChildren(EpochGroup.class), EpochsUnsorted(Epoch.class), 									// EpochGroup + Epochs(Epoch.class),
-        AnalysisRecords(AnalysisRecord.class), DerivedResponses(DerivedResponse.class), DerivedResponseNames(String.class),
-        MyDerivedResponseNames(String.class), MyDerivedResponses(DerivedResponse.class), ProtocolParameters(Property.class),
+        ChildLeafGroupDescendants(EpochGroup.class), GroupChildren(EpochGroup.class), EpochsUnsorted(Epoch.class), 									// EpochGroup + Epochs(Epoch.class), 
+        AnalysisRecords(AnalysisRecord.class), DerivedResponses(DerivedResponse.class), DerivedResponseNames(String.class), 
+        MyDerivedResponseNames(String.class), MyDerivedResponses(DerivedResponse.class), ProtocolParameters(Property.class), 
         Responses(Response.class), ResponseNames(String.class), StimuliNames(String.class), Stimuli(Stimulus.class),								// Epoch
         																																			// PurposeAndNotesEntity
-        ExternalDevices(ExternalDevice.class), Projects(Project.class), Sources(Source.class),	// Experiment + EpochGroups(EpochGroup.class), Epochs(Epoch.class),
+        ExternalDevices(ExternalDevice.class), Projects(Project.class), Sources(Source.class),	// Experiment + EpochGroups(EpochGroup.class), Epochs(Epoch.class), 
         AnalysisRecordNames(String.class), MyAnalysisRecords(AnalysisRecord.class), MyAnalysisRecordNames(String.class), 							// Project + AnalysisRecords(AnalysisRecord.class), Experiments(Experiment.class),
     	Annotated(IAnnotatableEntityBase.class),																									// IAnnotation
-        ;
-
+    	;
+        
     	final Class<?> _type;
     	CollectionName(Class<?> type) { _type = type; }
+    	
+        public Class<?> getType()		{ return _type; }
     };
 
     /** @return entity that matches key or null if none */
@@ -176,13 +184,13 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
      *  Source 										   			-> AnnotatableEntityBase -> ...
      *  Stimulus 							 -> IOBase          -> ...
      *  URLResource	-> Resource              -> ...
-     *
+     * 
      * * ooAbstractObj
      * ** ooObj
      * *** EntityBase (MyProperties:<String,Object>[], Owner:User, Properties:<String,Object[]>[], ResourceNames:String[], Resources:Resource[], URI:String, UUID:String, IsComplete:bool)
      * **** KeywordTag (Tag:String, Tagged:TaggableEntityBase[])
-     * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[])
-     * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[])
+     * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[]) 
+     * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[]) 
      * ****** AnalysisRecord (AnalysisParameters:<String,Object>[], EntryFunctionName:String, Epochs:Epoch[], Name:String, Notes:String, Project:Project, ScmRevision:String, ScmURL:String, SerializedLocation:String)
      * ****** ExternalDevice (Experiment:Experiment, Manufacturer:String, Name:String, SerializedLocation:String)
      * ****** Source (AllEpochGroups:EpochGroup[], AllExperiments:Experiment[], ChildLeafDescendants:Source[], Children:Source[], EpochGroups:EpochGroup[], Experiments:Experiment[], Label:String, Parent:Source, ParentRoot:Source, SerializedLocation:String)
@@ -200,11 +208,11 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
      * ******** Experiment (EpochGroups:EpochGroup[], Epochs:Epoch[], ExternalDevices:ExternalDevice[], Projects:Project[], SerializedLocation:String, Sources:Source[])
      * ******** Project (AnalysisRecords:AnalysisRecord[], AnalysisRecordNames:String[], Experiments:Experiment[], MyAnalysisRecords:AnalysisRecord[], MyAnalysisRecordNames:String[], Name:String, SerializedLocation:String)
      */
-
-    /**
-     * the add* utility methods are used during setup to configure the service metadata properly for each type;
-     * they add the properties and collections along with their types for each of the Ovation base-type classes.
-     *
+    
+    /**  
+     * the add* utility methods are used during setup to configure the service metadata properly for each type; 
+     * they add the properties and collections along with their types for each of the Ovation base-type classes.  
+     * 
      * @param propertyTypeMap
      * @param collectionTypeMap
      */
@@ -220,157 +228,123 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	}
     }
 
-    /** these type-specific methods add the properties and collections for each type
+    
+    /** these type-specific methods add the properties and collections for each type 
      * here and in the specific object-type models are the code that needs to change when the underlying
      * Ovation model changes
      */
     protected static void addEntityBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Owner, PropertyName.URI, PropertyName.UUID, PropertyName.IsIncomplete);
-        addCollections(collectionTypeMap, CollectionName.MyProperties, CollectionName.Properties, CollectionName.ResourceNames, CollectionName.Resources);
+    	addProperties (propertyTypeMap,   PropertyName.Owner, PropertyName.URI, PropertyName.UUID, PropertyName.IsIncomplete); 
+        addCollections(collectionTypeMap, CollectionName.MyProperties, CollectionName.Properties, CollectionName.ResourceNames, CollectionName.Resources);    
         // no parent type within Ovation
-    }
+    }    
     protected static void addKeywordTag(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Tag);
-        addCollections(collectionTypeMap, CollectionName.Tagged);
+    	addProperties (propertyTypeMap,   PropertyName.Tag); 
+        addCollections(collectionTypeMap, CollectionName.Tagged);   
         addEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addTaggableEntityBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-//    	addProperties (propertyTypeMap,   PropertyName.);
-        addCollections(collectionTypeMap, CollectionName.KeywordTags, CollectionName.MyKeywordTags, CollectionName.MyTags, CollectionName.Tags);
+        addCollections(collectionTypeMap, CollectionName.KeywordTags, CollectionName.MyKeywordTags, CollectionName.MyTags, CollectionName.Tags);   
         addEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addAnnotatableEntityBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-//    	addProperties (propertyTypeMap,   PropertyName.);
-        addCollections(collectionTypeMap, CollectionName.AnnotationGroupTags, CollectionName.Annotations, CollectionName.MyAnnotationGroupTags, CollectionName.MyAnnotations);
+        addCollections(collectionTypeMap, CollectionName.AnnotationGroupTags, CollectionName.Annotations, CollectionName.MyAnnotationGroupTags, CollectionName.MyAnnotations);   
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addAnalysisRecord(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.EntryFunctionName, PropertyName.Name, PropertyName.Notes, PropertyName.Project, PropertyName.ScmRevision, PropertyName.ScmURL, PropertyName.SerializedLocation);
+    	addProperties (propertyTypeMap,   PropertyName.EntryFunctionName, PropertyName.Name, PropertyName.Notes, PropertyName.Project, PropertyName.ScmRevision, PropertyName.ScmURL, PropertyName.SerializedLocation); 
         addCollections(collectionTypeMap, CollectionName.AnalysisParameters, CollectionName.Epochs);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addExternalDevice(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Experiment, PropertyName.Manufacturer, PropertyName.Name, PropertyName.SerializedLocation);
-//        addCollections(collectionTypeMap, CollectionName.);
+    	addProperties (propertyTypeMap,   PropertyName.Experiment, PropertyName.Manufacturer, PropertyName.Name, PropertyName.SerializedLocation); 
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addSource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Label, PropertyName.ParentSource, PropertyName.ParentRoot, PropertyName.SerializedLocation);
+    	addProperties (propertyTypeMap,   PropertyName.Label, PropertyName.ParentSource, PropertyName.ParentRoot, PropertyName.SerializedLocation); 
         addCollections(collectionTypeMap, CollectionName.AllEpochGroups, CollectionName.AllExperiments, CollectionName.ChildLeafSourceDescendants, CollectionName.SourceChildren, CollectionName.EpochGroups, CollectionName.Experiments);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addResource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Data, PropertyName.Name, PropertyName.Notes, PropertyName.UTI);
-//        addCollections(collectionTypeMap, CollectionName.);
+    	addProperties (propertyTypeMap,   PropertyName.Data, PropertyName.Name, PropertyName.Notes, PropertyName.UTI); 
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addURLResource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.URL);
-//        addCollections(collectionTypeMap, CollectionName.);
+    	addProperties (propertyTypeMap,   PropertyName.URL); 
         addResource(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addIOBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.ExternalDevice, PropertyName.Units);
+    	addProperties (propertyTypeMap,   PropertyName.ExternalDevice, PropertyName.Units); 
         addCollections(collectionTypeMap, CollectionName.DeviceParameters, CollectionName.DimensionLabels);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addStimulus(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Epoch, PropertyName.PluginID, PropertyName.SerializedLocation);
+    	addProperties (propertyTypeMap,   PropertyName.Epoch, PropertyName.PluginID, PropertyName.SerializedLocation); 
         addCollections(collectionTypeMap, CollectionName.StimulusParameters);
         addIOBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addResponseDataBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.NumericData, PropertyName.Data, PropertyName.NumericDataType);
-        addCollections(collectionTypeMap, CollectionName.DoubleData, CollectionName.FloatData, CollectionName.FloatingPointData, CollectionName.IntData, CollectionName.IntegerData, CollectionName.MatlabShape, CollectionName.Shape);
+    	addProperties (propertyTypeMap,   PropertyName.ByteOrder, PropertyName.NumericDataFormat, PropertyName.NumericByteOrder, PropertyName.SampleBytes, PropertyName.Data); 
+        addCollections(collectionTypeMap, CollectionName.MatlabShape, CollectionName.Shape, CollectionName.FloatingPointData, CollectionName.IntegerData, CollectionName.UnsignedIntData);
         addIOBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addResponse(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Epoch, PropertyName.SerializedLocation, PropertyName.UTI);
+    	addProperties (propertyTypeMap,   PropertyName.Epoch, PropertyName.SerializedLocation, PropertyName.UTI); 
         addCollections(collectionTypeMap, CollectionName.SamplingRates, CollectionName.SamplingUnits);
         addResponseDataBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addDerivedResponse(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Description, PropertyName.Epoch, PropertyName.Name, PropertyName.SerializedLocation);
+    	addProperties (propertyTypeMap,   PropertyName.Description, PropertyName.Epoch, PropertyName.Name, PropertyName.SerializedLocation); 
         addCollections(collectionTypeMap, CollectionName.DerivationParameters);
         addResponseDataBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addTimelineElement(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.EndTime, PropertyName.StartTime);
-//        addCollections(collectionTypeMap, CollectionName.);
+    	addProperties (propertyTypeMap,   PropertyName.EndTime, PropertyName.StartTime); 
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addEpochGroup(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.EpochCount, PropertyName.Experiment, PropertyName.Label, PropertyName.ParentEpochGroup, PropertyName.SerializedLocation, PropertyName.Source);
-        addCollections(collectionTypeMap, CollectionName.ChildLeafGroupDescendants, CollectionName.GroupChildren, CollectionName.Epochs, CollectionName.EpochsUnsorted);
+    	addProperties (propertyTypeMap,   PropertyName.EpochCount, PropertyName.Experiment, PropertyName.Label, PropertyName.ParentEpochGroup, PropertyName.SerializedLocation, PropertyName.Source); 
+        addCollections(collectionTypeMap, CollectionName.ChildLeafGroupDescendants, CollectionName.GroupChildren, CollectionName.Epochs, CollectionName.EpochsUnsorted);   
         addTimelineElement(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addEpoch(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Duration, PropertyName.EpochGroup, PropertyName.ExcludeFromAnalysis, PropertyName.NextEpoch, PropertyName.PreviousEpoch, PropertyName.ProtocolID, PropertyName.SerializedLocation);
-        addCollections(collectionTypeMap, CollectionName.AnalysisRecords, CollectionName.DerivedResponses, CollectionName.DerivedResponseNames, CollectionName.ProtocolParameters, CollectionName.Responses, CollectionName.ResponseNames, CollectionName.StimuliNames, CollectionName.Stimuli);
+    	addProperties (propertyTypeMap,   PropertyName.Duration, PropertyName.EpochGroup, PropertyName.ExcludeFromAnalysis, PropertyName.NextEpoch, PropertyName.PreviousEpoch, PropertyName.ProtocolID, PropertyName.SerializedLocation); 
+        addCollections(collectionTypeMap, CollectionName.AnalysisRecords, CollectionName.DerivedResponses, CollectionName.DerivedResponseNames, CollectionName.ProtocolParameters, CollectionName.Responses, CollectionName.ResponseNames, CollectionName.StimuliNames, CollectionName.Stimuli);   
         addTimelineElement(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addPurposeAndNotesEntity(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Notes, PropertyName.Purpose);
-//        addCollections(collectionTypeMap, CollectionName.);
+    	addProperties (propertyTypeMap,   PropertyName.Notes, PropertyName.Purpose); 
         addTimelineElement(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addExperiment(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.SerializedLocation);
-        addCollections(collectionTypeMap, CollectionName.EpochGroups, CollectionName.Epochs, CollectionName.ExternalDevices, CollectionName.Projects, CollectionName.Sources);
+    	addProperties (propertyTypeMap,   PropertyName.SerializedLocation); 
+        addCollections(collectionTypeMap, CollectionName.EpochGroups, CollectionName.Epochs, CollectionName.ExternalDevices, CollectionName.Projects, CollectionName.Sources);   
         addPurposeAndNotesEntity(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     protected static void addProject(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.Name, PropertyName.SerializedLocation);
-        addCollections(collectionTypeMap, CollectionName.AnalysisRecords, CollectionName.AnalysisRecordNames, CollectionName.Experiments, CollectionName.MyAnalysisRecords, CollectionName.MyAnalysisRecordNames);
+    	addProperties (propertyTypeMap,   PropertyName.Name, PropertyName.SerializedLocation); 
+        addCollections(collectionTypeMap, CollectionName.AnalysisRecords, CollectionName.AnalysisRecordNames, CollectionName.Experiments, CollectionName.MyAnalysisRecords, CollectionName.MyAnalysisRecordNames);   
         addPurposeAndNotesEntity(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     // User extends TaggableEntityBase
     protected static void addUser(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Username);
-//      addCollections(collectionTypeMap, CollectionName.);
-
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
+    }    
     // IAnnotation extends ITaggableEntityBase
     protected static void addIAnnotation(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Text);
     	addCollections(collectionTypeMap, CollectionName.Annotated);
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
-    }
-    /* ResponseDataBase repeats much of this
-    protected static void addNumericData(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.ByteOrder, PropertyName.DataBuffer, PropertyName.Data, PropertyName.DoubleData);
+    } 
 
-    	NumericData foo;
-    	foo.get
-
-    	getDataBuffer()
-    	getDataBytes()	// byte[]
-    	getDataFormat()
-    	getDoubleData()
-    	getFloatData()
-    	getFloatingPointData()
-    	getIntData()
-    	getIntegerData()
-    	getNumericByteOrder()
-    	getSampleBytes()
-    	getShape()
-    	getShortIntData()
-    	getUnsignedIntData()
-    	addProperties (propertyTypeMap,   PropertyName.Text);
-    	addCollections(collectionTypeMap, CollectionName.);
-
-    }
-    */
-
-
-
+    
     /**
-     * the get* utility methods are used at request-processing time to reduce duplicate code
+     * the get* utility methods are used at request-processing time to reduce duplicate code 
      * across the various models (since they share so much in common in their base types).
      * not all base types are exposed as public classes, tho, so some of this code is still
      * in the child models even tho it's common to many of them.
-     *
+     * 
      * @param obj
      * @param col
      * @return
@@ -391,11 +365,11 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			case MyProperties:	return Property.makeIterable(obj.getMyProperties());
 			case Properties:	return Property.makeIterable(obj.getProperties());
 			case ResourceNames:	return CollectionUtils.makeIterable(obj.getResourceNames());
-			case Resources:		return obj.getResourcesIterable();
+			case Resources:		return obj.getResourcesIterable();  
 			default: 			_log.error("Unknown collection '" + col + "' for type '" + obj + "'"); return CollectionUtils.makeEmptyIterable();	// nowhere to go from here
 		}
     }
-
+    
     // KeywordTag extends EntityBase
     protected static Object getProperty(KeywordTag obj, PropertyName prop) {
     	switch (prop) {
@@ -441,7 +415,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 					return getCollection((ITaggableEntityBase)obj, col);
 		}
     }
-
+    
     // AnalysisRecord extends AnnotatableEntityBase
     protected static Object getProperty(AnalysisRecord obj, PropertyName prop) {
     	switch (prop) {
@@ -500,7 +474,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 						return getCollection((IAnnotatableEntityBase)obj, col);
 		}
     }
-
+    
     // Resource extends AnnotatableEntityBase
     protected static Object getProperty(Resource obj, PropertyName prop) {
     	switch (prop) {
@@ -516,7 +490,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: return getCollection((IAnnotatableEntityBase)obj, col);
 		}
     }
-
+    
     // URLResource extends Resource
     protected static Object getProperty(URLResource obj, PropertyName prop) {
     	switch (prop) {
@@ -529,7 +503,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: return getCollection((Resource)obj, col);
 		}
     }
-
+    
     // IOBase extends AnnotatableEntityBase implements IIOBase
     protected static Object getProperty(IIOBase obj, PropertyName prop) {
     	switch (prop) {
@@ -541,12 +515,12 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     protected static Iterable<?> getCollection(IIOBase obj, CollectionName col) {
     	switch (col) {
 			case DeviceParameters: 	return CollectionUtils.makeIterable(obj.getDeviceParameters());
-			case DimensionLabels:	return CollectionUtils.makeEmptyIterable(); // obj.getDimensionLables();	// FIXME
+			case DimensionLabels:	return CollectionUtils.makeEmptyIterable();//  obj.getDimensionLabels();	// FIXME - add to IIOBase
 			default: return getCollection((IAnnotatableEntityBase)obj, col);
 		}
     }
-
-    // Stimulus extends IOBase
+    
+    // Stimulus extends IOBase 
     protected static Object getProperty(Stimulus obj, PropertyName prop) {
     	switch (prop) {
     		case Epoch:				return obj.getEpoch();
@@ -557,12 +531,13 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }
     protected static Iterable<?> getCollection(Stimulus obj, CollectionName col) {
     	switch (col) {
-			case StimulusParameters: 	return Property.makeIterable(obj.getStimulusParameters());
+			case StimulusParameters: 	return CollectionUtils.makeIterable(obj.getStimulusParameters());
+			case DimensionLabels:		return CollectionUtils.makeIterable(obj.getDimensionLabels());	// FIXME - add to IIOBase
 			default: 					return getCollection((IIOBase)obj, col);
 		}
     }
-
-    // ResponseDataBase extends IOBase implements IResponseDataBase (FIXME but IResponseDataBase has no methods so it's pretty useless as an interface here)
+    
+    // ResponseDataBase extends IOBase implements IResponseDataBase (FIXME but IResponseDataBase has no methods so it's pretty useless as an interface here) 
     protected static Object getProperty(IResponseDataBase obj, PropertyName prop) {
     	// since IResponseDataBase has no methods we need to cast back down to implementation type to get a handle to the methods :(
     	Response 		res = obj instanceof Response ? (Response)obj : null;
@@ -571,21 +546,25 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
     		return getProperty((IIOBase)obj, prop);
     	}
-
+		NumericData 		data = res != null ? res.getData() : dRes.getData();
+    	
     	try {
 	    	switch (prop) {
-	    		case NumericData:		return res != null ? res.getData() 				: dRes.getData();
-	    		case Data:				return res != null ? res.getDataBytes() 		: dRes.getDataBytes();
-	    		case NumericDataType:	return res != null ? res.getNumericDataType() 	: dRes.getNumericDataType();
+//	    		case Data:				return res != null ? res.getDataBytes() 		: dRes.getDataBytes();
+		    	case ByteOrder:			return String.valueOf(data.getByteOrder());
+		    	case NumericDataFormat:	return String.valueOf(data.getDataFormat());
+		    	case NumericByteOrder:	return String.valueOf(data.getNumericByteOrder());
+		    	case SampleBytes:		return data.getSampleBytes();
+		    	case Data:				return data.getDataBytes();
 	    		default: 				return getProperty((IIOBase)obj, prop);
 	    	}
-		} catch (RuntimeException ndx) {
+		} catch (RuntimeException ndx) { 
 			// was NumericDataException, but that's no longer public (??)
 			// there are several reasons this exception is thrown; not all of them are due to type-mismatch (some are just thrown because there's no data at all)
 			return null;
 		}
     }
-
+    
     protected static Iterable<?> getCollection(IResponseDataBase obj, CollectionName col) {
     	Response 		res = obj instanceof Response ? (Response)obj : null;
     	DerivedResponse dRes = obj instanceof DerivedResponse ? (DerivedResponse)obj : null;
@@ -593,19 +572,20 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
     		return getCollection((IIOBase)obj, col);
     	}
-
+		NumericData 		data = res != null ? res.getData() : dRes.getData();
+		NumericDataFormat 	type = data.getDataFormat();
+    	
     	switch (col) {
-			case DoubleData:		return CollectionUtils.makeIterable(res != null ? res.getDoubleData() 		: dRes.getDoubleData());
-			case FloatData:			return CollectionUtils.makeIterable(res != null ? res.getFloatData() 		: dRes.getFloatData());
-			case FloatingPointData:	return CollectionUtils.makeIterable(res != null ? res.getFloatingPointData(): dRes.getFloatingPointData());
-			case IntData:			return CollectionUtils.makeIterable(res != null ? res.getIntData() 			: dRes.getIntData());
-			case IntegerData:		return CollectionUtils.makeIterable(res != null ? res.getIntegerData() 		: dRes.getIntegerData());
 			case MatlabShape:		return CollectionUtils.makeIterable(res != null ? res.getMatlabShape() 		: dRes.getMatlabShape());
 			case Shape:				return CollectionUtils.makeIterable(res != null ? res.getShape() 			: dRes.getShape());
+			case DimensionLabels:	return CollectionUtils.makeIterable(res != null ? res.getDimensionLabels() 	: dRes.getDimensionLabels());	// FIXME - should be added to IIOBase
+			case FloatingPointData:	return type == NumericDataFormat.FloatingPointDataType   ? CollectionUtils.makeIterable(data.getFloatingPointData()) : null;
+			case IntegerData:		return type == NumericDataFormat.IntegerDataType 		 ? CollectionUtils.makeIterable(data.getIntegerData()) 		 : null;
+			case UnsignedIntData:	return type == NumericDataFormat.UnsignedIntegerDataType ? CollectionUtils.makeIterable(data.getUnsignedIntData()) 	 : null;
 			default: 				return getCollection((IIOBase)obj, col);
 		}
     }
-
+    
     // Response extends ResponseDataBase
     protected static Object getProperty(Response obj, PropertyName prop) {
     	switch (prop) {
@@ -622,7 +602,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 			return getCollection((IResponseDataBase)obj, col);
 		}
     }
-
+    
     // DerivedResponse extends ResponseDataBase (extends IOBase implements IResponseDataBase)
     protected static Object getProperty(DerivedResponse obj, PropertyName prop) {
     	switch (prop) {
@@ -639,21 +619,21 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 					return getCollection((IResponseDataBase)obj, col);
 		}
     }
-
-
-    // ITimelineElement extends IooObj, IEntityBase, ITaggableEntityBase, IAnnotatableEntityBase
+    
+    
+    // ITimelineElement extends IooObj, IEntityBase, ITaggableEntityBase, IAnnotatableEntityBase 
     protected static Object getProperty(ITimelineElement obj, PropertyName prop) {
     	switch (prop) {
 			case EndTime:	return convertDateTime(obj.getEndTime());
 			case StartTime:	return convertDateTime(obj.getStartTime());
-   			default: 		return getProperty((IAnnotatableEntityBase)obj, prop);
+   			default: 		return getProperty((IAnnotatableEntityBase)obj, prop); 
     	}
     }
     protected static Iterable<?> getCollection(ITimelineElement obj, CollectionName col) {
     	// has no collections
     	return getCollection((IAnnotatableEntityBase)obj, col);
     }
-
+    
     // EpochGroup extends TimelineElement
     protected static Object getProperty(EpochGroup obj, PropertyName prop) {
     	switch (prop) {
@@ -675,7 +655,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 						return getCollection((ITimelineElement)obj, col);
 		}
     }
-
+    
     // Epoch extends TimelineElement
     protected static Object getProperty(Epoch obj, PropertyName prop) {
     	switch (prop) {
@@ -702,28 +682,28 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 			default: 					return getCollection((ITimelineElement)obj, col);
 		}
     }
-
+    
     // Experiment extends PurposeAndNotesEntity (extends TimelineElement (extends AnnotatableEntityBase implements ITimelineElement) implements IOwnerNotes, IScientificPurpose)
     protected static Object getProperty(Experiment obj, PropertyName prop) {
     	switch (prop) {
     		case SerializedLocation:	return obj.getSerializedLocation();
 	    	case Notes:					return obj.getNotes();		// 2 different interfaces so easier to just handle it here (for now)
 	    	case Purpose: 				return obj.getPurpose();
-	    	default: 					return getProperty((ITimelineElement)obj, prop);
+	    	default: 					return getProperty((ITimelineElement)obj, prop); 
     	}
-    }
+    }    
     protected static Iterable<?> getCollection(Experiment obj, CollectionName col) {
     	switch (col) {
     		case EpochGroups:		return CollectionUtils.makeIterable(obj.getEpochGroups());
-    		case Epochs:			return obj.getEpochsIterable();
+    		case Epochs:			return obj.getEpochIterable();
     		case ExternalDevices:	return CollectionUtils.makeIterable(obj.getExternalDevices());
     		case Projects:			return CollectionUtils.makeIterable(obj.getProjects());
     		case Sources:   		return CollectionUtils.makeIterable(obj.getSources());
-    		default:				return getCollection((ITimelineElement)obj, col);
-
+    		default:				return getCollection((ITimelineElement)obj, col); 
+    	
     	}
-    }
-
+    }    
+    
     // Project extends PurposeAndNotesEntity (extends TimelineElement (extends AnnotatableEntityBase implements ITimelineElement) implements IOwnerNotes, IScientificPurpose)
     protected static Object getProperty(Project obj, PropertyName prop) {
     	switch (prop) {
@@ -731,9 +711,9 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 	    	case SerializedLocation:	return obj.getSerializedLocation();
 	    	case Notes:					return obj.getNotes();		// 2 different interfaces so easier to just handle it here (for now)
 	    	case Purpose: 				return obj.getPurpose();
-	    	default: 					return getProperty((ITimelineElement)obj, prop);
+	    	default: 					return getProperty((ITimelineElement)obj, prop); 
     	}
-    }
+    }    
     protected static Iterable<?> getCollection(Project obj, CollectionName col) {
     	switch (col) {
     		case AnalysisRecords: 		return obj.getAnalysisRecordIterable();
@@ -741,20 +721,20 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		case Experiments:			return CollectionUtils.makeIterable(obj.getExperiments());
     		case MyAnalysisRecords:		return obj.getMyAnalysisRecordIterable();
     		case MyAnalysisRecordNames:	return CollectionUtils.makeIterable(obj.getMyAnalysisRecordNames());
-	    	default: 					return getCollection((ITimelineElement)obj, col);
+	    	default: 					return getCollection((ITimelineElement)obj, col); 
     	}
     }
-
+    
     // User extends TaggableEntityBase
     protected static Object getProperty(User obj, PropertyName prop) {
     	switch (prop) {
 	    	case Username:	return obj.getUsername();
-	    	default: 		return getProperty((ITaggableEntityBase)obj, prop);
+	    	default: 		return getProperty((ITaggableEntityBase)obj, prop); 
     	}
-    }
+    }    
     protected static Iterable<?> getCollection(User obj, CollectionName col) {
     	switch (col) {
-	    	default: 					return getCollection((ITaggableEntityBase)obj, col);
+	    	default: 					return getCollection((ITaggableEntityBase)obj, col); 
     	}
     }
 
@@ -762,33 +742,32 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     protected static Object getProperty(IAnnotation obj, PropertyName prop) {
     	switch (prop) {
 	    	case Text:	return obj.getText();
-	    	default: 	return getProperty((ITaggableEntityBase)obj, prop);
+	    	default: 	return getProperty((ITaggableEntityBase)obj, prop); 
     	}
-    }
+    }    
     protected static Iterable<?> getCollection(IAnnotation obj, CollectionName col) {
     	switch (col) {
-    		case Annotated:	return CollectionUtils.makeIterable(obj.getAnnotated());
-	    	default:		return getCollection((ITaggableEntityBase)obj, col);
+    		case Annotated:	return CollectionUtils.makeIterable(obj.getAnnotated()); 
+	    	default:		return getCollection((ITaggableEntityBase)obj, col); 
     	}
     }
-
+    
     /* cast the Value type to a type which subclasses IEntityBase
      * @throws ClassCastException if the value-type doesn't extended from Ovations IEntityBase
      */
 //    protected Class<? extends IEntityBase> getOvationEntityType() { return (Class<? extends IEntityBase>) getEntityType(); }
-
-//    @SuppressWarnings("unchecked")
-    protected Iterable<V> executeQueryInfo() {
+    
+    @SuppressWarnings("unchecked")
+	protected Iterable<V> executeQueryInfo() {
         return (Iterable<V>)executeQueryInfo(getEntityType(), getQueryInfo());
     }
-
+    
+    @SuppressWarnings("unchecked")
 	protected Iterable<V> executeQuery(String query) {
     	return (Iterable<V>)CollectionUtils.makeIterable(executeQuery(getEntityType(), query));
     }
-
-    protected static Iterable<? extends IEntityBase> executeQueryInfo(Class<? extends IEntityBase> type, QueryInfo info) {    // Iterator<EntityBase> FIXME
-        // http://win7-32:8080/ovodata/Ovodata.svc/Projects/?$format=json&pql=query%20goes%20here
-        // queryInfo:{{inlineCnt:null, top:null, skip:null, filter:null, orderBy:null, skipToken:null, customOptions:{pql=query goes here}, expand:[], select:[]}
+    
+    protected static Iterable<? extends IEntityBase> executeQueryInfo(Class<? extends IEntityBase> type, QueryInfo info) {
         Map<String,String> customOptions = (info != null && info.customOptions != null) ? info.customOptions : null;
         if (customOptions != null) {
             String pqlQuery = customOptions.get("pql");
@@ -811,15 +790,15 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         }
         return null;
     }
-
+    
 	public static <T extends IEntityBase> Iterator<T> executeQuery(Class<? extends IEntityBase> type, String pqlQuery) {
     	return DataContextCache.getThreadContext().query(type, pqlQuery);
     }
 
-    public static IEntityBase getByURI(String uri) {
+    public static IEntityBase getByURI(String uri) { 
     	return DataContextCache.getThreadContext().objectWithURI(uri);
     }
 
-	public static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
-	public static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
+	public static LocalDateTime 	convertDateTime(DateTime dt) 	{ return dt != null ? dt.toLocalDateTime() : null; }
+	public static String 			convertURLToString(URL url) 	{ return url != null ? url.toExternalForm() : null; }
 }

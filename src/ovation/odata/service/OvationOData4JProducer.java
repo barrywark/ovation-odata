@@ -86,7 +86,9 @@ public class OvationOData4JProducer extends InMemoryProducer {
 	/** for debug purposes only */
 	public <TEntity, TKey> void register(Class<TEntity> entityClass, PropertyModel propertyModel, Class<TKey> keyClass,
 			String entitySetName, Func<Iterable<TEntity>> get, Func1<TEntity, TKey> id) {
-		_log.debug("register(eType:" + entityClass + ", model:" + propertyModel + ", kType:" + keyClass + ", name:" + entitySetName + ", getAll:" + get + ", getId:" + id);
+		if (_log.isDebugEnabled()) {
+			_log.debug("register(eType:" + entityClass + ", model:" + propertyModel + ", kType:" + keyClass + ", name:" + entitySetName + ", getAll:" + get + ", getId:" + id);
+		}
 		super.register(entityClass, propertyModel, keyClass, entitySetName, get, id);
 	}
 	
@@ -165,7 +167,14 @@ public class OvationOData4JProducer extends InMemoryProducer {
 		if (_log.isDebugEnabled()) {
 			_log.debug("getEntity(set:" + entitySetName + ", key:" + entityKey + ", queryInfo:{" + OData4JServerUtils.toString(queryInfo) + "}");
 		}
-		return super.getEntity(entitySetName, entityKey, queryInfo);
+		
+		ExtendedPropertyModel.setQueryInfo(queryInfo);
+		try {
+			return super.getEntity(entitySetName, entityKey, queryInfo);
+		} finally {
+			// remove from thread-local
+			ExtendedPropertyModel.setQueryInfo(null);
+		}
 	}
 	
     /**

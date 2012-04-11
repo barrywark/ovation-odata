@@ -49,7 +49,7 @@ public final class AuthUtil {
 		byte[] decodedBytes = Base64.decodeBase64(authHeader);
 		if (decodedBytes != null) {
 			String decodedString = new String(decodedBytes);
-			_log.info("decoded '" + decodedString + "'");
+//			_log.info("decoded '" + decodedString + "'"); - puts uid:password into log
 			int delim = decodedString.indexOf(':');
 			if (delim != -1) {
 				String userName = decodedString.substring(0, delim);
