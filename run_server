@@ -1,4 +1,5 @@
 #!/bin/bash
 
 #ant jar
+# -DOVATION_TEST="true" 
 java -Dovodata.props=/var/lib/ovation/ovodata.props -jar distrib/ovodata.jar
