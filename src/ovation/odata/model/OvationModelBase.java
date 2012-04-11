@@ -24,7 +24,7 @@ import ovation.ITaggableEntityBase;
 import ovation.ITimelineElement;
 import ovation.KeywordTag;
 import ovation.NumericData;
-import ovation.NumericDataType;
+import ovation.NumericDataFormat;
 import ovation.Project;
 import ovation.Resource;
 import ovation.Response;
@@ -32,13 +32,14 @@ import ovation.Source;
 import ovation.Stimulus;
 import ovation.URLResource;
 import ovation.User;
+import ovation.odata.model.dao.PrimitiveCollectionModel;
 import ovation.odata.model.dao.Property;
 import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 
 
 public abstract class OvationModelBase<K,V extends IEntityBase> extends ExtendedPropertyModel<K,V> {
-    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type - FIXME Ovation-specific
+    public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type
 
     protected OvationModelBase(Map<String,Class<?>> fieldTypes, Map<String,Class<?>> collectionTypes) {
     	super(fieldTypes, collectionTypes);
@@ -68,14 +69,13 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         
         // supporting types
         ExtendedPropertyModel.addPropertyModel(new StringModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new DoubleModel());		// so we can return a collection of doubles (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new FloatModel());		// so we can return a collection of floats (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new IntegerModel());		// so we can return a collection of integers (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new LongModel());		// so we can return a collection of longs (they may have fixed this in odata4j 0.6)
+//TODO        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<String>(String.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Double>(Double.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Float>(Float.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Integer>(Integer.class));
+        ExtendedPropertyModel.addPropertyModel(new PrimitiveCollectionModel<Long>(Long.class));
 
         ExtendedPropertyModel.addPropertyModel(new Property.Model());	// so we can return string-string pairs
-// FIXME        ExtendedPropertyModel.addPropertyModel(new NumericDataModel());
-        ExtendedPropertyModel.addPropertyModel(new NumericDataTypeModel());	
         
         ExtendedPropertyModel.addPropertyModel(new ITaggableEntityBaseModel());	// dunno about this idea but we have a collection of base-types
         ExtendedPropertyModel.addPropertyModel(new IAnnotationModel());
@@ -83,9 +83,13 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     
     // note, these two enums feel like they could be expanded to also have the getters but doing so would take a 
     // fair amount of time (tho might result in a very nice expendable design...)
+
+    interface NameEnum {
+        public Class<?> getType();
+    }
     
     /** every property of every child-type - ensures consistent naming and also makes common util functions doable */
-    protected enum PropertyName     {
+    protected enum PropertyName implements NameEnum {
         Owner(User.class), URI(String.class), UUID(String.class), IsIncomplete(Boolean.class),				// EntityBase
         Tag(String.class),	 																				// KeywordTag 
         																									// TaggableEntityBase 
@@ -98,7 +102,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         URL(String.class), 																					// URLResource
         ExternalDevice(ExternalDevice.class), Units(String.class), 											// IOBase
         Epoch(Epoch.class), PluginID(String.class),  														// Stimulus + SerializedLocation(String.class), 			
-        NumericData(NumericData.class), NumericDataType(NumericDataType.class), 							// ResponseDataBase 	
+//        NumericData(NumericData.class), NumericDataType(NumericDataType.class), 							// ResponseDataBase 	
         																									// Response + Epoch(ovation.Epoch.class), SerializedLocation(String.class), UTI(String.class), 										 			
         Description(String.class), 																			// DerivedResponse + Epoch(Epoch.class), Name(String.class), SerializedLocation(String.class), 			 		
         EndTime(LocalDateTime.class), StartTime(LocalDateTime.class), 										// TimelineElement 		
@@ -112,16 +116,17 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         Text(String.class),																					// IAnnotation
         
         
-    	ByteOrder(String.class), Format(String.class), NumericByteOrder(String.class), SampleBytes(Short.class) // NumericDataType
-        ;
+    	ByteOrder(String.class), NumericDataFormat(String.class), NumericByteOrder(String.class), SampleBytes(Short.class), // NumericDataType
+    	;
         
-    	final Class<?> _type;
-    	PropertyName(Class<?> type) { _type = type; }
-    	// ideas - base-class for both CollectionName and PropertyName enums, getter method factories (takes some work off model and adds consistency and centralizes code)
+    	final Class<?> 	_type;
+    	PropertyName(Class<?> type)	{ _type = type; }
+
+        public Class<?> getType() 				{ return _type; }
     };
     
     /** every collection (association) of every child-type - ensures consistent naming */
-    protected enum CollectionName {
+    protected enum CollectionName implements NameEnum {
         MyProperties(Property.class), Owner(User.class), Properties(Property.class), ResourceNames(String.class), Resources(Resource.class),		// EntityBase
         Tagged(ITaggableEntityBase.class),																											// KeywordTag 			
         KeywordTags(KeywordTag.class), MyKeywordTags(KeywordTag.class), MyTags(String.class), Tags(String.class),									// TaggableEntityBase 
@@ -135,6 +140,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         DeviceParameters(Property.class), DimensionLabels(String.class),																			// IOBase
         StimulusParameters(Property.class), 																										// Stimulus
         DoubleData(Double.class), FloatData(Float.class), FloatingPointData(Double.class), IntData(Integer.class), IntegerData(Integer.class), 
+        ShortIntData(Short.class), UnsignedIntData(Long.class),																						// NumericDataType																
         MatlabShape(Long.class), Shape(Long.class),																									// ResponseDataBase
         SamplingRates(Double.class), SamplingUnits(String.class), 																					// Response
         DerivationParameters(Property.class), 																										// DerivedResponse
@@ -147,10 +153,12 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         ExternalDevices(ExternalDevice.class), Projects(Project.class), Sources(Source.class),	// Experiment + EpochGroups(EpochGroup.class), Epochs(Epoch.class), 
         AnalysisRecordNames(String.class), MyAnalysisRecords(AnalysisRecord.class), MyAnalysisRecordNames(String.class), 							// Project + AnalysisRecords(AnalysisRecord.class), Experiments(Experiment.class),
     	Annotated(IAnnotatableEntityBase.class),																									// IAnnotation
-        ;
+    	;
         
     	final Class<?> _type;
     	CollectionName(Class<?> type) { _type = type; }
+    	
+        public Class<?> getType()		{ return _type; }
     };
     
     /** @return entity that matches key or null if none */
@@ -168,11 +176,12 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }
     
     @SuppressWarnings("unchecked")
-    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {	// FIXME Ovation-specific
-        String typeName = getTypeName();	// the type-name of V
+    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {
         String query     = "uuid == " + key.toKeyStringWithoutParentheses();
-        _log.info("executing type:'" + typeName + "', query:'" + query + "'");
-        return (Iterator<V>)DataContextCache.getThreadContext().query(typeName, query);
+        if (_log.isDebugEnabled()) { 
+        	_log.debug("executing type:'" + getEntityType() + "', query:'" + query + "'");
+        }
+        return (Iterator<V>)DataContextCache.getThreadContext().query(getEntityType(), query);
     }
     
     
@@ -236,6 +245,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		collectionTypeMap.put(col.name(), col._type);
     	}
     }
+
     
     /** these type-specific methods add the properties and collections for each type 
      * here and in the specific object-type models are the code that needs to change when the underlying
@@ -252,12 +262,10 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         addEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addTaggableEntityBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-//    	addProperties (propertyTypeMap,   PropertyName.); 
         addCollections(collectionTypeMap, CollectionName.KeywordTags, CollectionName.MyKeywordTags, CollectionName.MyTags, CollectionName.Tags);   
         addEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addAnnotatableEntityBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-//    	addProperties (propertyTypeMap,   PropertyName.); 
         addCollections(collectionTypeMap, CollectionName.AnnotationGroupTags, CollectionName.Annotations, CollectionName.MyAnnotationGroupTags, CollectionName.MyAnnotations);   
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
     }    
@@ -268,7 +276,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }    
     protected static void addExternalDevice(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Experiment, PropertyName.Manufacturer, PropertyName.Name, PropertyName.SerializedLocation); 
-//        addCollections(collectionTypeMap, CollectionName.);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addSource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
@@ -278,12 +285,10 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }    
     protected static void addResource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Data, PropertyName.Name, PropertyName.Notes, PropertyName.UTI); 
-//        addCollections(collectionTypeMap, CollectionName.);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addURLResource(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.URL); 
-//        addCollections(collectionTypeMap, CollectionName.);
         addResource(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addIOBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
@@ -297,8 +302,8 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         addIOBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addResponseDataBase(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.NumericData, PropertyName.Data, PropertyName.NumericDataType); 
-        addCollections(collectionTypeMap, CollectionName.DoubleData, CollectionName.FloatData, CollectionName.FloatingPointData, CollectionName.IntData, CollectionName.IntegerData, CollectionName.MatlabShape, CollectionName.Shape);
+    	addProperties (propertyTypeMap,   PropertyName.ByteOrder, PropertyName.NumericDataFormat, PropertyName.NumericByteOrder, PropertyName.SampleBytes, PropertyName.Data); 
+        addCollections(collectionTypeMap, CollectionName.MatlabShape, CollectionName.Shape, CollectionName.FloatingPointData, CollectionName.IntegerData, CollectionName.UnsignedIntData);
         addIOBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addResponse(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
@@ -313,7 +318,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }    
     protected static void addTimelineElement(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.EndTime, PropertyName.StartTime); 
-//        addCollections(collectionTypeMap, CollectionName.);
         addAnnotatableEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addEpochGroup(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
@@ -328,7 +332,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }    
     protected static void addPurposeAndNotesEntity(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Notes, PropertyName.Purpose); 
-//        addCollections(collectionTypeMap, CollectionName.);   
         addTimelineElement(propertyTypeMap, collectionTypeMap);
     }    
     protected static void addExperiment(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
@@ -344,8 +347,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     // User extends TaggableEntityBase
     protected static void addUser(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
     	addProperties (propertyTypeMap,   PropertyName.Username);
-//      addCollections(collectionTypeMap, CollectionName.);   
-    	
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
     }    
     // IAnnotation extends ITaggableEntityBase
@@ -354,32 +355,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	addCollections(collectionTypeMap, CollectionName.Annotated);
         addTaggableEntityBase(propertyTypeMap, collectionTypeMap);
     } 
-    /* ResponseDataBase repeats much of this
-    protected static void addNumericData(Map<String,Class<?>> propertyTypeMap, Map<String,Class<?>> collectionTypeMap) {
-    	addProperties (propertyTypeMap,   PropertyName.ByteOrder, PropertyName.DataBuffer, PropertyName.Data, PropertyName.DoubleData);
-
-    	NumericData foo;
-    	foo.get
-    
-    	getDataBuffer()
-    	getDataBytes()	// byte[]
-    	getDataFormat()
-    	getDoubleData()
-    	getFloatData()
-    	getFloatingPointData()
-    	getIntData()
-    	getIntegerData()
-    	getNumericByteOrder()
-    	getSampleBytes()
-    	getShape()
-    	getShortIntData()
-    	getUnsignedIntData()
-    	addProperties (propertyTypeMap,   PropertyName.Text);
-    	addCollections(collectionTypeMap, CollectionName.);
-
-    }    
-    */
-    
 
     
     /**
@@ -558,7 +533,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     protected static Iterable<?> getCollection(IIOBase obj, CollectionName col) {
     	switch (col) {
 			case DeviceParameters: 	return CollectionUtils.makeIterable(obj.getDeviceParameters());
-			case DimensionLabels:	return CollectionUtils.makeEmptyIterable(); // obj.getDimensionLables();	// FIXME
+			case DimensionLabels:	return CollectionUtils.makeEmptyIterable();//  obj.getDimensionLabels();	// FIXME - add to IIOBase
 			default: return getCollection((IAnnotatableEntityBase)obj, col);
 		}
     }
@@ -574,7 +549,8 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     }
     protected static Iterable<?> getCollection(Stimulus obj, CollectionName col) {
     	switch (col) {
-			case StimulusParameters: 	return Property.makeIterable(obj.getStimulusParameters());
+			case StimulusParameters: 	return CollectionUtils.makeIterable(obj.getStimulusParameters());
+			case DimensionLabels:		return CollectionUtils.makeIterable(obj.getDimensionLabels());	// FIXME - add to IIOBase
 			default: 					return getCollection((IIOBase)obj, col);
 		}
     }
@@ -588,12 +564,16 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
     		return getProperty((IIOBase)obj, prop);
     	}
+		NumericData 		data = res != null ? res.getData() : dRes.getData();
     	
     	try {
 	    	switch (prop) {
-	    		case NumericData:		return res != null ? res.getData() 				: dRes.getData();
-	    		case Data:				return res != null ? res.getDataBytes() 		: dRes.getDataBytes();
-	    		case NumericDataType:	return res != null ? res.getNumericDataType() 	: dRes.getNumericDataType();
+//	    		case Data:				return res != null ? res.getDataBytes() 		: dRes.getDataBytes();
+		    	case ByteOrder:			return String.valueOf(data.getByteOrder());
+		    	case NumericDataFormat:	return String.valueOf(data.getDataFormat());
+		    	case NumericByteOrder:	return String.valueOf(data.getNumericByteOrder());
+		    	case SampleBytes:		return data.getSampleBytes();
+		    	case Data:				return data.getDataBytes();
 	    		default: 				return getProperty((IIOBase)obj, prop);
 	    	}
 		} catch (RuntimeException ndx) { 
@@ -610,15 +590,16 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
     		return getCollection((IIOBase)obj, col);
     	}
+		NumericData 		data = res != null ? res.getData() : dRes.getData();
+		NumericDataFormat 	type = data.getDataFormat();
     	
     	switch (col) {
-			case DoubleData:		return CollectionUtils.makeIterable(res != null ? res.getDoubleData() 		: dRes.getDoubleData());
-			case FloatData:			return CollectionUtils.makeIterable(res != null ? res.getFloatData() 		: dRes.getFloatData());
-			case FloatingPointData:	return CollectionUtils.makeIterable(res != null ? res.getFloatingPointData(): dRes.getFloatingPointData());
-			case IntData:			return CollectionUtils.makeIterable(res != null ? res.getIntData() 			: dRes.getIntData());
-			case IntegerData:		return CollectionUtils.makeIterable(res != null ? res.getIntegerData() 		: dRes.getIntegerData());
 			case MatlabShape:		return CollectionUtils.makeIterable(res != null ? res.getMatlabShape() 		: dRes.getMatlabShape());
 			case Shape:				return CollectionUtils.makeIterable(res != null ? res.getShape() 			: dRes.getShape());
+			case DimensionLabels:	return CollectionUtils.makeIterable(res != null ? res.getDimensionLabels() 	: dRes.getDimensionLabels());	// FIXME - should be added to IIOBase
+			case FloatingPointData:	return type == NumericDataFormat.FloatingPointDataType   ? CollectionUtils.makeIterable(data.getFloatingPointData()) : null;
+			case IntegerData:		return type == NumericDataFormat.IntegerDataType 		 ? CollectionUtils.makeIterable(data.getIntegerData()) 		 : null;
+			case UnsignedIntData:	return type == NumericDataFormat.UnsignedIntegerDataType ? CollectionUtils.makeIterable(data.getUnsignedIntData()) 	 : null;
 			default: 				return getCollection((IIOBase)obj, col);
 		}
     }
@@ -794,18 +775,17 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
      */
 //    protected Class<? extends IEntityBase> getOvationEntityType() { return (Class<? extends IEntityBase>) getEntityType(); }
     
-//    @SuppressWarnings("unchecked")
-    protected Iterable<V> executeQueryInfo() {
+    @SuppressWarnings("unchecked")
+	protected Iterable<V> executeQueryInfo() {
         return (Iterable<V>)executeQueryInfo(getEntityType(), getQueryInfo());
     }
     
+    @SuppressWarnings("unchecked")
 	protected Iterable<V> executeQuery(String query) {
     	return (Iterable<V>)CollectionUtils.makeIterable(executeQuery(getEntityType(), query));
     }
     
-    protected static Iterable<? extends IEntityBase> executeQueryInfo(Class<? extends IEntityBase> type, QueryInfo info) {    // Iterator<EntityBase> FIXME
-        // http://win7-32:8080/ovodata/Ovodata.svc/Projects/?$format=json&pql=query%20goes%20here        
-        // queryInfo:{{inlineCnt:null, top:null, skip:null, filter:null, orderBy:null, skipToken:null, customOptions:{pql=query goes here}, expand:[], select:[]}
+    protected static Iterable<? extends IEntityBase> executeQueryInfo(Class<? extends IEntityBase> type, QueryInfo info) {
         Map<String,String> customOptions = (info != null && info.customOptions != null) ? info.customOptions : null;
         if (customOptions != null) {
             String pqlQuery = customOptions.get("pql");
@@ -837,6 +817,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	return DataContextCache.getThreadContext().objectWithURI(uri);
     }
 
-	public static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
-	public static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
+	public static LocalDateTime 	convertDateTime(DateTime dt) 	{ return dt != null ? dt.toLocalDateTime() : null; }
+	public static String 			convertURLToString(URL url) 	{ return url != null ? url.toExternalForm() : null; }
 }
