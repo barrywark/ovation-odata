@@ -64,19 +64,19 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
         ExtendedPropertyModel.addPropertyModel(new SourceModel());
         ExtendedPropertyModel.addPropertyModel(new StimulusModel());
         ExtendedPropertyModel.addPropertyModel(new URLResourceModel());
+        ExtendedPropertyModel.addPropertyModel(new UserModel());		
         
         // supporting types
-//        ExtendedPropertyModel.addPropertyModel(new MapEntryModel());
         ExtendedPropertyModel.addPropertyModel(new StringModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new DoubleModel());
-        ExtendedPropertyModel.addPropertyModel(new FloatModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new IntegerModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
-        ExtendedPropertyModel.addPropertyModel(new LongModel());		// so we can return a collection of strings (they may have fixed this in odata4j 0.6)
+        ExtendedPropertyModel.addPropertyModel(new DoubleModel());		// so we can return a collection of doubles (they may have fixed this in odata4j 0.6)
+        ExtendedPropertyModel.addPropertyModel(new FloatModel());		// so we can return a collection of floats (they may have fixed this in odata4j 0.6)
+        ExtendedPropertyModel.addPropertyModel(new IntegerModel());		// so we can return a collection of integers (they may have fixed this in odata4j 0.6)
+        ExtendedPropertyModel.addPropertyModel(new LongModel());		// so we can return a collection of longs (they may have fixed this in odata4j 0.6)
 
-        ExtendedPropertyModel.addPropertyModel(new Property.Model());
-        ExtendedPropertyModel.addPropertyModel(new UserModel());
+        ExtendedPropertyModel.addPropertyModel(new Property.Model());	// so we can return string-string pairs
 // FIXME        ExtendedPropertyModel.addPropertyModel(new NumericDataModel());
-        ExtendedPropertyModel.addPropertyModel(new NumericDataTypeModel());
+        ExtendedPropertyModel.addPropertyModel(new NumericDataTypeModel());	
+        
         ExtendedPropertyModel.addPropertyModel(new ITaggableEntityBaseModel());	// dunno about this idea but we have a collection of base-types
         ExtendedPropertyModel.addPropertyModel(new IAnnotationModel());
     }
@@ -771,24 +771,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 	    	default:		return getCollection((ITaggableEntityBase)obj, col); 
     	}
     }
-
     
-    
-
-/*
-    protected static Object getProperty(Project obj, PropertyName prop) {
-    	switch (prop) {
-	    	case SerializedLocation:	return obj.getSerializedLocation();
-	    	default: 					return getProperty((ITimelineElement)obj, prop); 
-    	}
-    }    
-    protected static Iterable<?> getCollection(Project obj, CollectionName col) {
-    	switch (col) {
-    		case AnalysisRecordNames:	return CollectionUtils.makeIterable(obj.getAnalysisRecordNames());
-	    	default: 					return getCollection((ITimelineElement)obj, col); 
-    	}
-    }
- */
     /* cast the Value type to a type which subclasses IEntityBase
      * @throws ClassCastException if the value-type doesn't extended from Ovations IEntityBase
      */
@@ -837,6 +820,6 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	return DataContextCache.getThreadContext().objectWithURI(uri);
     }
 
-	static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
-	static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
+	public static LocalDateTime 	convertDateTime(DateTime dt) { return dt != null ? dt.toLocalDateTime() : null; }
+	public static String 			convertURLToString(URL url) { return url != null ? url.toExternalForm() : null; }
 }
