@@ -11,6 +11,8 @@ import org.odata4j.core.OEntityKey;
 import org.odata4j.producer.QueryInfo;
 import org.odata4j.producer.inmemory.PropertyModel;
 
+import ovation.odata.util.CollectionUtils;
+
 import com.google.common.collect.Maps;
 
 /**
@@ -32,6 +34,10 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     
     protected Map<String,Class<?>> _fieldTypes;
     protected Map<String,Class<?>> _collectionTypes;
+    
+    // default implementations - overwritten via either overwriting allGetter()/idGetter() or providing new 
+    private Func<Iterable<V>> 	_allGetter = new Func<Iterable<V>>()	{  public Iterable<V> apply() { return CollectionUtils.makeEmptyIterable(); } };
+    private Func1<V,K>			_idGetter;	// no way to provide a default for this unless we want to always return null which is probably a bad idea 
     
     protected ExtendedPropertyModel(Map<String,Class<?>> fieldTypes, Map<String,Class<?>> collectionTypes) {
         _fieldTypes = fieldTypes;
@@ -65,27 +71,31 @@ public abstract class ExtendedPropertyModel<K,V> implements PropertyModel {
     }
     
     /** @return the name of the entity set this model represents and by which it is registered with OData4J */
-    public abstract String entityName();
+    public abstract String 		entityName();
     /** @return the elements of the specified collection with the associated entity type */
     public abstract Iterable<?> getCollectionValue(Object target, String collectionName);
     /** @return the value of the specified property of the associated entity type */
-    public abstract Object getPropertyValue(Object target, String propertyName);
+    public abstract Object 		getPropertyValue(Object target, String propertyName);
     
     /** @return the type of Entity this Model is for */
-    public abstract Class<V> getEntityType(); 
+    public abstract Class<V> 	getEntityType(); 
     /** @return the primary-key type for this model's entity type */
-    public abstract Class<K> getKeyType();
+    public abstract Class<K> 	getKeyType();
     /** @return a Func object which, when apply()ed will return all top-level entities of this model's type */
-    public abstract Func<Iterable<V>> allGetter();
+    public Func<Iterable<V>> 	allGetter() { return _allGetter; }
     /** @return a Func1 object which, when apply()ed will return the primary key for the provided entity instance */
-    public abstract Func1<V,K> idGetter();
+    public Func1<V,K> 			idGetter() { return _idGetter; }
     /** @return the name used to identify this type in the Ovation DB */
-    public abstract String getTypeName();
+    public abstract String 		getTypeName();
     /** @return the value associated with the key */
-    public abstract V getEntityByKey(OEntityKey key);
-    /** @return the collection of values associated with the query */
+    public V 					getEntityByKey(OEntityKey key) { return null; }
+    
+    // to be called from sub-class' ctor
+    protected void setAllGetter(Func<Iterable<V>> allGetter) 	{ _allGetter = allGetter; }
+    protected void setIdGetter(Func1<V,K> idGetter)				{ _idGetter = idGetter; }
+    
+//    /** @return the collection of values associated with the query */
 // FIXME	public abstract Iterable<V> executeQuery(String query);
-	
 // FIXME    public Iterable<V> executeQueryInfo() { return (Iterable<V>)executeQueryInfo(getEntityType(), getQueryInfo()); }
     
     

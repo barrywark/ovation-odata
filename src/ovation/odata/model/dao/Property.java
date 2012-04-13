@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.core4j.Func;
 import org.core4j.Func1;
-import org.odata4j.core.OEntityKey;
 
 import ovation.odata.model.ExtendedPropertyModel;
 import ovation.odata.util.CollectionUtils;
@@ -41,7 +39,10 @@ public class Property {
 			// no collections
 		}
 		
-		public Model() 	{ super(_propertyTypeMap, _collectionTypeMap); }
+		public Model() 	{ 
+			super(_propertyTypeMap, _collectionTypeMap);
+			setIdGetter(new Func1<Property,String>() { public String apply(Property record) { return record != null ? record.getKey() : null; } });
+		}
 		
 		public String 			getTypeName()	{ return "Property"; }
 		public String 			entityName() 	{ return "_Properties"; }
@@ -64,18 +65,6 @@ public class Property {
 				case value: return obj.getValue();
 				default:	_log.error("unrecognized property '" + prop + "' requested for " + obj); return null;
 			}
-		}
-
-		public Func<Iterable<Property>> allGetter() {
-			return new Func<Iterable<Property>>() {  public Iterable<Property> apply() { return CollectionUtils.makeEmptyIterable(); } };
-		}
-
-		public Func1<Property,String> idGetter() { 
-			return new Func1<Property,String>() { public String apply(Property record) { return record != null ? record.getKey() : null; } };
-		}
-		@Override
-		public Property getEntityByKey(OEntityKey key) {
-			return null;
 		}
 	}	
 

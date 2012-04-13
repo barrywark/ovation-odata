@@ -3,6 +3,7 @@ package ovation.odata.util;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
@@ -41,6 +42,22 @@ public class CollectionUtils {
 			return makeEmptyIterable();
 		}
 		return makeIterable(Lists.newArrayList(array));
+	}
+	// special-case handlers for creating iterables over arrays of primitives
+	public static Iterable<Double> makeIterable(final double[] array) {
+		Collection<Double> list = Lists.newArrayList();
+		for (double d : array) { list.add(Double.valueOf(d)); }
+		return makeIterable(list);
+	}
+	public static Iterable<Integer> makeIterable(final int[] array) {
+		Collection<Integer> list = Lists.newArrayList();
+		for (int i : array) { list.add(Integer.valueOf(i)); }
+		return makeIterable(list);
+	}
+	public static Iterable<Long> makeIterable(final long[] array) {
+		Collection<Long> list = Lists.newArrayList();
+		for (long l : array) { list.add(Long.valueOf(l)); }
+		return makeIterable(list);
 	}
 
 	/** convert Map to Set and return Iterable that returns its iterator */
