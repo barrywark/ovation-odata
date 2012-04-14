@@ -59,7 +59,7 @@ public class TypeDataMap {
 		_addType(new TypeData("com.pkware.zip-archive", 	"application/zip", 			"zip"));			// AKA application/x-compressed, application/x-zip-compressed, multipart/x-zip		
 		_addType(new TypeData("com.mathworks.workspace", 	"application/matlab-mat", 	"mat"));	
 		_addType(new TypeData("com.mathworks.figure", 		"application/matlab-fig", 	"fig"));	
-		_addType(new TypeData("com.mathworks.matlab-source", "application/matlab-m", 	"m"));	
+		_addType(new TypeData("com.mathworks.matlab-source","application/matlab-m", 	"m"));	
     }
 	
 	public static TypeData getUTIData(String uti) 	{ return _utiDataMap.get(uti); }
