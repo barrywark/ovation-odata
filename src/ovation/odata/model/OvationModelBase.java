@@ -38,11 +38,11 @@ import ovation.odata.util.CollectionUtils;
 import ovation.odata.util.DataContextCache;
 
 
-public abstract class OvationModelBase<K,V extends IEntityBase> extends ExtendedPropertyModel<K,V> {
+public abstract class OvationModelBase<V extends IEntityBase> extends ExtendedPropertyModel<V> {
     public static final String GET_ALL_PQL = "true";	// apparently this PQL "query" returns all instances of a type
 
     protected OvationModelBase(Map<String,Class<?>> fieldTypes, Map<String,Class<?>> collectionTypes) {
-    	super(fieldTypes, collectionTypes);
+    	super(fieldTypes, collectionTypes, PropertyName.UUID.name());
     }
     
 	// rules of thumb - 
