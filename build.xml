@@ -13,12 +13,12 @@
     <property name="war.release"        value="ovodata.war"/>
     <property name="war.release.root"   value="ROOT.war"/>
     <property name="guava.jar.path"     value="${dir.lib}/guava-r09.jar"/>
-    <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.5-bundle-custom.jar"/>
+    <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.6.0-bundle.jar"/>
     <property name="ovation.jar.path"   value="${dir.lib}/ovation-1.1.jar"/>
     
     <fileset id="set.jars" dir="${dir.lib}">
         <include name="guava-r09.jar" />
-        <include name="odata4j-0.5-bundle-custom.jar" />
+        <include name="odata4j-0.6.0-bundle.jar" />
         <include name="ovation-1.1.jar" />
     </fileset>
     
@@ -45,15 +45,17 @@
 
     <target name="jar" depends="compile" description="build war">
         <mkdir dir="${dir.distrib}"/>
+    	<!-- jarring is so fast it's faster to blow away old jar than compare timestamps -->
+    	<delete file="${dir.distrib}/${jar.release}"/>
         <jar jarfile="${dir.distrib}/${jar.release}">
             <fileset dir="${dir.compile}"/>
             <manifest>
                 <attribute name="Main-Class" value="ovation.odata.service.StandaloneJerseyServer"/>
             </manifest>
         	<!-- we have to exclude any rsa signature files and manifests - the rest i remove just to keep things focussed and the jar smaller -->
-            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${ovation.jar.path}"/>
-            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${odata4j.jar.path}"/>
-            <zipfileset includes="**/*" excludes="META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${guava.jar.path}"/>
+            <zipfileset includes="**/*" excludes="javax/servlet/** META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${ovation.jar.path}"/>
+            <zipfileset includes="**/*" excludes="javax/servlet/** META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${odata4j.jar.path}"/>
+            <zipfileset includes="**/*" excludes="javax/servlet/** META-INF/MANIFEST.MF META-INF/*.rsa META-INF/*.sf META-INF/maven/** META-INF/LICENSE* META-INF/NOTICE* META-INF/DEPENDENCIES*" src="${guava.jar.path}"/>
         </jar>
     </target>
 
