@@ -621,7 +621,7 @@ public abstract class OvationModelBase<V extends IEntityBase> extends ExtendedPr
     		case Description: 			return obj.getDescription();
     		case Epoch:					return obj.getEpoch();
     		case Name:					return obj.getName();
-    		default: 					return getProperty((IResponseDataBase)obj, prop);
+    		default: 					return getProperty((IResponseData)obj, prop);
     	}
     }
     protected static Iterable<?> getCollection(DerivedResponse obj, CollectionName col) {
