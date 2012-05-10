@@ -8,3 +8,5 @@ lib/
 #IntelliJ
 workspace.xml
 out/
+
+.DS_Store

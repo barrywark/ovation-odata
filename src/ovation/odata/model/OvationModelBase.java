@@ -19,7 +19,7 @@ import ovation.IAnnotatableEntityBase;
 import ovation.IAnnotation;
 import ovation.IEntityBase;
 import ovation.IIOBase;
-import ovation.IResponseDataBase;
+import ovation.IResponseData;
 import ovation.ITaggableEntityBase;
 import ovation.ITimelineElement;
 import ovation.KeywordTag;
@@ -160,15 +160,33 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     	
         public Class<?> getType()		{ return _type; }
     };
-
+    
     /** @return entity that matches key or null if none */
     public V getEntityByKey(OEntityKey key) {
-        return (V)DataContextCache.getThreadContext().objectWithUUID(key.toKeyStringWithoutParentheses().replace("'",""));
+        Iterator<V> itr = getEntityIterByUUID(key);
+        if (itr.hasNext() == false) {
+            _log.error("Unable to find Project with UUID " + key.toKeyStringWithoutParentheses());
+            return null;
+        }
+        V v = itr.next(); // the object we want.
+        if (itr.hasNext()) {
+            _log.error("Found multiple " + getEntityType() + " with UUID " + key.toKeyStringWithoutParentheses());
+        }
+        return v;
     }
+    
+    @SuppressWarnings("unchecked")
+    protected Iterator<V> getEntityIterByUUID(OEntityKey key) {
+        String query     = "uuid == " + key.toKeyStringWithoutParentheses();
+        if (_log.isDebugEnabled()) { 
+        	_log.debug("executing type:'" + getEntityType() + "', query:'" + query + "'");
+        }
+        return (Iterator<V>)DataContextCache.getThreadContext().query(getEntityType(), query);
+    }
+    
+    
 
-
-
-
+    
     /**
      * model-hierarchy (if this changes this code must be updated)
      *  AnalysisRecord											-> AnnotatableEntityBase -> TaggableEntityBase -> EntityBase -> ooObj -> ooAbstractObj
@@ -537,13 +555,13 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 		}
     }
     
-    // ResponseDataBase extends IOBase implements IResponseDataBase (FIXME but IResponseDataBase has no methods so it's pretty useless as an interface here) 
-    protected static Object getProperty(IResponseDataBase obj, PropertyName prop) {
-    	// since IResponseDataBase has no methods we need to cast back down to implementation type to get a handle to the methods :(
+    // ResponseDataBase extends IOBase implements IResponseData (FIXME but IResponseData has no methods so it's pretty useless as an interface here) 
+    protected static Object getProperty(IResponseData obj, PropertyName prop) {
+    	// since IResponseData has no methods we need to cast back down to implementation type to get a handle to the methods :(
     	Response 		res = obj instanceof Response ? (Response)obj : null;
     	DerivedResponse dRes = obj instanceof DerivedResponse ? (DerivedResponse)obj : null;
     	if (res == null && dRes == null) {
-    		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
+    		_log.error("IResponseData that isn't Response or DerivedResponse - can't use - " + obj);
     		return getProperty((IIOBase)obj, prop);
     	}
 		NumericData 		data = res != null ? res.getData() : dRes.getData();
@@ -565,11 +583,11 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
 		}
     }
     
-    protected static Iterable<?> getCollection(IResponseDataBase obj, CollectionName col) {
+    protected static Iterable<?> getCollection(IResponseData obj, CollectionName col) {
     	Response 		res = obj instanceof Response ? (Response)obj : null;
     	DerivedResponse dRes = obj instanceof DerivedResponse ? (DerivedResponse)obj : null;
     	if (res == null && dRes == null) {
-    		_log.error("IResponseDataBase that isn't Response or DerivedResponse - can't use - " + obj);
+    		_log.error("IResponseData that isn't Response or DerivedResponse - can't use - " + obj);
     		return getCollection((IIOBase)obj, col);
     	}
 		NumericData 		data = res != null ? res.getData() : dRes.getData();
@@ -592,31 +610,31 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     		case Epoch:				return obj.getEpoch();
     		case SerializedLocation:return obj.getSerializedLocation();
     		case UTI:				return obj.getUTI();
-    		default: 				return getProperty((IResponseDataBase)obj, prop);
+    		default: 				return getProperty((IResponseData)obj, prop);
     	}
     }
     protected static Iterable<?> getCollection(Response obj, CollectionName col) {
     	switch (col) {
 			case SamplingRates:	return CollectionUtils.makeIterable(obj.getSamplingRates());
 			case SamplingUnits: return CollectionUtils.makeIterable(obj.getSamplingUnits());
-			default: 			return getCollection((IResponseDataBase)obj, col);
+			default: 			return getCollection((IResponseData)obj, col);
 		}
     }
     
-    // DerivedResponse extends ResponseDataBase (extends IOBase implements IResponseDataBase)
+    // DerivedResponse extends ResponseDataBase (extends IOBase implements IResponseData)
     protected static Object getProperty(DerivedResponse obj, PropertyName prop) {
     	switch (prop) {
     		case Description: 			return obj.getDescription();
     		case Epoch:					return obj.getEpoch();
     		case Name:					return obj.getName();
     		case SerializedLocation:	return obj.getSerializedLocation();
-    		default: 					return getProperty((IResponseDataBase)obj, prop);
+    		default: 					return getProperty((IResponseData)obj, prop);
     	}
     }
     protected static Iterable<?> getCollection(DerivedResponse obj, CollectionName col) {
     	switch (col) {
 			case DerivationParameters : return Property.makeIterable(obj.getDerivationParameters());
-			default: 					return getCollection((IResponseDataBase)obj, col);
+			default: 					return getCollection((IResponseData)obj, col);
 		}
     }
     
@@ -695,7 +713,7 @@ public abstract class OvationModelBase<K,V extends IEntityBase> extends Extended
     protected static Iterable<?> getCollection(Experiment obj, CollectionName col) {
     	switch (col) {
     		case EpochGroups:		return CollectionUtils.makeIterable(obj.getEpochGroups());
-    		case Epochs:			return obj.getEpochIterable();
+    		case Epochs:			return obj.getEpochsIterable();
     		case ExternalDevices:	return CollectionUtils.makeIterable(obj.getExternalDevices());
     		case Projects:			return CollectionUtils.makeIterable(obj.getProjects());
     		case Sources:   		return CollectionUtils.makeIterable(obj.getSources());
