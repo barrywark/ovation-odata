@@ -4,29 +4,30 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.log4j.Logger;
 import org.core4j.Func;
 import org.core4j.Func1;
 import org.odata4j.core.OAtomStreamEntity;
 
-import ovation.IEntityBase;
 import ovation.Response;
-import ovation.odata.model.dao.IEntityBaseAdapter;
 import ovation.odata.util.TypeDataMap;
 import ovation.odata.util.TypeDataMap.TypeData;
 
 import com.google.common.collect.Maps;
 
 /**
- * an adapter of Response to OData4J's streaming interface
+ * an adapter of Response to OData4J's streaming interface - this class isn't ready - the design feels wrong
+ * (creating a decorator around an IEntityBase instance to add OAtomStreamEntity as a base type so that
+ * Odata4j will recognize that it supports streaming - current thinking is to change how InMemoryProducer
+ * handles streams and not make it so tightly coupled to the entity (a stream factory or annotation perhaps)
+ * 
  * @author Ron
- */
+ * /
 class StreamingResponse extends IEntityBaseAdapter implements OAtomStreamEntity {
     StreamingResponse(Response res) { super(res); }
     /**
      * @return ??
-     */
+     * /
     @Override
     public String getAtomEntitySource() {
         ResponseModel._log.info("getAtomEntitySource() called from ", new Throwable());
@@ -34,7 +35,7 @@ class StreamingResponse extends IEntityBaseAdapter implements OAtomStreamEntity 
     }
     /**
      * @return ??
-     */
+     * /
     @Override
     public String getAtomEntityType() {
         ResponseModel._log.info("getAtomEntityType() called from ", new Throwable());
