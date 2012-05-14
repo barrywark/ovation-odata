@@ -492,7 +492,7 @@ public abstract class OvationModelBase<V extends IEntityBase> extends ExtendedPr
     // Resource extends AnnotatableEntityBase
     protected static Object getProperty(Resource obj, PropertyName prop) {
     	switch (prop) {
-    		case Data:	return obj.getData();
+    		case Data:	return obj.getDataBytes();
     		case Name:	return obj.getName();
     		case Notes:	return obj.getNotes();
     		case UTI:	return obj.getUti();
@@ -593,8 +593,8 @@ public abstract class OvationModelBase<V extends IEntityBase> extends ExtendedPr
 			case Shape:				return CollectionUtils.makeIterable(res != null ? res.getShape() 			: dRes.getShape());
 			case DimensionLabels:	return CollectionUtils.makeIterable(res != null ? res.getDimensionLabels() 	: dRes.getDimensionLabels());	// FIXME - should be added to IIOBase
 			case FloatingPointData:	return type == NumericDataFormat.FloatingPointDataType   ? CollectionUtils.makeIterable(data.getFloatingPointData()) : null;
-			case IntegerData:		return type == NumericDataFormat.IntegerDataType 		 ? CollectionUtils.makeIterable(data.getIntegerData()) 		 : null;
-			case UnsignedIntData:	return type == NumericDataFormat.UnsignedIntegerDataType ? CollectionUtils.makeIterable(data.getUnsignedIntData()) 	 : null;
+			case IntegerData:		return type == NumericDataFormat.SignedFixedPointDataType 		 ? CollectionUtils.makeIterable(data.getIntegerData()) 		 : null;
+			case UnsignedIntData:	return type == NumericDataFormat.UnsignedFixedPointDataType ? CollectionUtils.makeIterable(data.getUnsignedIntData()) 	 : null;
 			default: 				return getCollection((IIOBase)obj, col);
 		}
     }

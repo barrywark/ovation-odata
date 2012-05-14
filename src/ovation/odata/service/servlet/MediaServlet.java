@@ -1,20 +1,18 @@
 package ovation.odata.service.servlet;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.log4j.Logger;
-
 import ovation.IEntityBase;
 import ovation.Resource;
 import ovation.Response;
 import ovation.odata.model.ResourceModel;
 import ovation.odata.util.TypeDataMap;
 import ovation.odata.util.TypeDataMap.TypeData;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * servlet to serve up media (images, avis, etc) based on element URI
@@ -55,7 +53,7 @@ public class MediaServlet extends HttpServlet {
 		
 		// load the requested media
 		String uti  = resource != null ? resource.getUti()  : response.getUTI();
-		byte[] data = resource != null ? resource.getData() : response.getDataBytes();
+		byte[] data = resource != null ? resource.getDataBytes() : response.getDataBytes();
 		
 		if (data == null) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unable to find any data for " + uri);
