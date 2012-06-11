@@ -1,6 +1,7 @@
 classes/*
 *.war
 distrib/*.jar
+bin/
 *.orig
 .ant
 lib/
