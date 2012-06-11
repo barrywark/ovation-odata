@@ -13,11 +13,11 @@ import java.util.Set;
 
 /**
  * very similar to the model hierarchy in OvationModelBase, but this one compares OData4J OEntity fields with Ovation DB fields
- * 
+ *
  * *** EntityBase (MyProperties:<String,Object>[], Owner:User, Properties:<String,Object[]>[], ResourceNames:String[], Resources:Resource[], URI:String, UUID:String, IsComplete:bool)
  * **** KeywordTag (Tag:String, Tagged:TaggableEntityBase[])
- * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[]) 
- * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[]) 
+ * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[])
+ * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[])
  * ****** AnalysisRecord (AnalysisParameters:<String,Object>[], EntryFunctionName:String, Epochs:Epoch[], Name:String, Notes:String, Project:Project, ScmRevision:String, ScmURL:String, SerializedLocation:String)
  * ****** ExternalDevice (Experiment:Experiment, Manufacturer:String, Name:String, SerializedLocation:String)
  * ****** Source (AllEpochGroups:EpochGroup[], AllExperiments:Experiment[], ChildLeafDescendants:Source[], Children:Source[], EpochGroups:EpochGroup[], Experiments:Experiment[], Label:String, Parent:Source, ParentRoot:Source, SerializedLocation:String)
@@ -34,7 +34,7 @@ import java.util.Set;
  * ******* PurposeAndNotesEntity[IOwnerNotes,IScientificPurpose] (Notes:String, Purpose:String)
  * ******** Experiment (EpochGroups:EpochGroup[], Epochs:Epoch[], ExternalDevices:ExternalDevice[], Projects:Project[], SerializedLocation:String, Sources:Source[])
  * ******** Project (AnalysisRecords:AnalysisRecord[], AnalysisRecordNames:String[], Experiments:Experiment[], MyAnalysisRecords:AnalysisRecord[], MyAnalysisRecordNames:String[], Name:String, SerializedLocation:String)
- * 
+ *
  * @author Ron
  */
 public class OvationJUnitUtils {
@@ -43,7 +43,7 @@ public class OvationJUnitUtils {
 	public static void assertEquals(String msg, IEntityBase fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		Assert.assertNotNull(msg, fromDb);
 		Assert.assertNotNull(msg, fromSvc);
-		
+
 		// simple props
 		Assert.assertEquals(msg, fromDb.getURIString(), 		OData4JClientUtils.getStringProperty(fromSvc, 	"URI"));
 		Assert.assertEquals(msg, fromDb.getUuid(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"UUID"));
@@ -51,62 +51,62 @@ public class OvationJUnitUtils {
 	//	Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation")); - EntityBase has this, but not IEntityBase (but AnalysisRecord does)
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));		- EntityBase has this, but not IEntityBase
 
-		
+
 		// object props
 		User 	owner 		= fromDb.getOwner();
 		OEntity svcOwner 	= OData4JClientUtils.getSubEntity(svc, fromSvc, "Owner");
 		OvationJUnitUtils.assertEquals(msg + " - user", owner, svcOwner, svc, db);
 
-		
+
 		// object collections
 		Map<String,Object> myProperties = fromDb.getMyProperties();
-		
+
 		Map<String,Object[]> properties = fromDb.getProperties();
-		
+
 		assertEquals(msg + "- resourceNames", 	OData4JClientUtils.getSubEntities(svc, fromSvc, "ResourceNames"), 	fromDb.getResourceNames());
 		assertEquals(msg + "- resources", 		OData4JClientUtils.getSubEntities(svc, fromSvc, "Resources"), 		fromDb.getResourcesIterable());
 	}
 
 	public static void assertEquals(String msg, IAnnotatableEntityBase fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (ITaggableEntityBase)fromDb, fromSvc, svc, db);
-		
+
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "AnnotationGroupTags"), 	fromDb.getAnnotationGroupTags());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "Annotations"), 			fromDb.getAnnotations());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "MyAnnotationGroupTags"), fromDb.getMyAnnotationGroupTags());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "MyAnnotations"), 		fromDb.getMyAnnotations());
 	}
-	
+
 	public static void assertEquals(String msg, ITimelineElement fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IAnnotatableEntityBase)fromDb, fromSvc, svc, db);
 		Assert.assertEquals(msg, fromDb.getStartTime(),	OData4JClientUtils.getDateTimeProperty(fromSvc, "StartTime"));
 		Assert.assertEquals(msg, fromDb.getEndTime(), 	OData4JClientUtils.getDateTimeProperty(fromSvc, "EndTime"));
 	}
-	
+
 	// TaggableEntityBase extends EntityBase implements ITaggableEntityBase
 	public static void assertEquals(String msg, ITaggableEntityBase fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IEntityBase)fromDb, fromSvc, svc, db);
-		
+
 		// TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[])
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "Tags"), 			fromDb.getTags());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "MyTags"), 		fromDb.getMyTags());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "KeywordTags"), 	fromDb.getKeywordTags());
 		assertEquals(msg, OData4JClientUtils.getSubEntities(svc, fromSvc, "MyKeywordTags"), fromDb.getMyKeywordTags());
 	}
-	
+
 	// KeywordTag extends EntityBase
 	public static void assertEquals(String msg, KeywordTag fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IEntityBase)fromDb, fromSvc, svc, db);
 
 		/* KEYWORD_TAG links - [
-		 * ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Owner], 
-		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/MyProperties], 
-		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/ResourceNames], 
-		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tagged,title=Tagged,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Tagged], 
-		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Resources], 
-		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Properties]]		
+		 * ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Owner],
+		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/MyProperties],
+		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/ResourceNames],
+		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tagged,title=Tagged,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Tagged],
+		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Resources],
+		 * ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=KeywordTags('6eb6ee4e-b386-4013-9da0-8cdc17c6228c')/Properties]]
 		 */
 		Assert.assertEquals(msg, fromDb.getTag(), OData4JClientUtils.getStringProperty(fromSvc, "Tag"));
-		
+
 		// assert length is the same, but we don't assert contents as it might create circular loops (in case any of these contain this KeywordTag)
 		ITaggableEntityBase[] tagged = fromDb.getTagged();
 		Enumerable<OEntity> svcTagged = OData4JClientUtils.getSubEntities(svc, fromSvc, "Tagged");
@@ -116,7 +116,7 @@ public class OvationJUnitUtils {
 
 	public static void assertEquals(String msg, IIOBase fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IAnnotatableEntityBase)fromDb, fromSvc, svc, db);
-/*		
+/*
     		case ExternalDevice:return obj.getExternalDevice();
     		case Units:			return obj.getUnits();
     		default: 			return getProperty((IAnnotatableEntityBase)obj, prop);
@@ -125,15 +125,15 @@ public class OvationJUnitUtils {
 			default: return getCollection(obj, col);
 */
 	}
-    
-	public static void assertEquals(String msg, IResponseDataBase fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
+
+	public static void assertEquals(String msg, IResponseData fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IIOBase)fromDb, fromSvc, svc, db);
-		
+
     	Response 		res = fromDb instanceof Response ? (Response)fromDb : null;
     	DerivedResponse dRes = fromDb instanceof DerivedResponse ? (DerivedResponse)fromDb : null;
     	Assert.assertTrue(msg + " invalid type of IResponseDataBase", res != null || dRes != null);
 
-/*    	
+/*
 	    		case NumericData:		return res != null ? res.getData() 				: dRes.getData();
 	    		case Data:				return res != null ? res.getDataBytes() 		: dRes.getDataBytes();
 	    		case NumericDataType:	return res != null ? res.getNumericDataType() 	: dRes.getNumericDataType();
@@ -146,20 +146,20 @@ public class OvationJUnitUtils {
 			case MatlabShape:		return CollectionUtils.makeIterable(res != null ? res.getMatlabShape() 		: dRes.getMatlabShape());
 			case Shape:				return CollectionUtils.makeIterable(res != null ? res.getShape() 			: dRes.getShape());
 			default: 				return getCollection((IIOBase)obj, col);
-*/			
+*/
     }
-    
+
 	public static void assertEquals(String msg, IAnnotation fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (ITaggableEntityBase)fromDb, fromSvc, svc, db);
-/*		
+/*
 	    	case Text:	return obj.getText();
-	    	default: 	return getProperty(()obj, prop); 
-    		case Annotated:	return CollectionUtils.makeIterable(obj.getAnnotated()); 
-	    	default:		return getCollection((ITaggableEntityBase)obj, col); 
+	    	default: 	return getProperty(()obj, prop);
+    		case Annotated:	return CollectionUtils.makeIterable(obj.getAnnotated());
+	    	default:		return getCollection((ITaggableEntityBase)obj, col);
 */
 	}
-	
-	
+
+
 /*
 EXPERIMENT links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Owner], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroups,title=EpochGroups,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/EpochGroups], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevices,title=ExternalDevices,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/ExternalDevices], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Sources,title=Sources,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Sources], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Projects,title=Projects,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Projects], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epochs,title=Epochs,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Epochs], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Experiments('0519d351-e28d-4978-b11a-f1a1fc0a08be')/Resources]]
 EPOCH_GROUP links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Source,title=Source,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Source], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentEpochGroup,title=ParentEpochGroup,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/ParentEpochGroup], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiment,title=Experiment,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Experiment], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/GroupChildren,title=GroupChildren,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/GroupChildren], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epochs,title=Epochs,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Epochs], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochsUnsorted,title=EpochsUnsorted,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/EpochsUnsorted], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/Resources], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ChildLeafGroupDescendants,title=ChildLeafGroupDescendants,href=EpochGroups('bfbcc14c-bdf4-4b43-9e2b-04b029c46a48')/ChildLeafGroupDescendants]]
@@ -184,36 +184,36 @@ USER links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/da
     		case SerializedLocation:	return obj.getSerializedLocation();
 	    	case Notes:					return obj.getNotes();		// 2 different interfaces so easier to just handle it here (for now)
 	    	case Purpose: 				return obj.getPurpose();
-	    	default: 					return getProperty((ITimelineElement)obj, prop); 
+	    	default: 					return getProperty((ITimelineElement)obj, prop);
     		case EpochGroups:		return CollectionUtils.makeIterable(obj.getEpochGroups());
     		case Epochs:			return obj.getEpochIterable();
     		case ExternalDevices:	return CollectionUtils.makeIterable(obj.getExternalDevices());
     		case Projects:			return CollectionUtils.makeIterable(obj.getProjects());
     		case Sources:   		return CollectionUtils.makeIterable(obj.getSources());
-    		default:				return getCollection((ITimelineElement)obj, col); 
-    	
+    		default:				return getCollection((ITimelineElement)obj, col);
+
     	}
-    }    
+    }
  */
 /*
 EXPERIMENT links - [
-	ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Owner], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/ResourceNames], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroups,title=EpochGroups,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/EpochGroups], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyTags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevices,title=ExternalDevices,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/ExternalDevices], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Sources,title=Sources,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Sources], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyAnnotationGroupTags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Properties], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Projects,title=Projects,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Projects], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyAnnotations], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Tags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyProperties], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyKeywordTags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/AnnotationGroupTags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Annotations], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/KeywordTags], 
-	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epochs,title=Epochs,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Epochs], 
+	ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Owner],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/ResourceNames],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroups,title=EpochGroups,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/EpochGroups],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyTags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevices,title=ExternalDevices,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/ExternalDevices],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Sources,title=Sources,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Sources],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyAnnotationGroupTags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Properties],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Projects,title=Projects,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Projects],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyAnnotations],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Tags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyProperties],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/MyKeywordTags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/AnnotationGroupTags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Annotations],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/KeywordTags],
+	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epochs,title=Epochs,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Epochs],
 	ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Experiments('5440f852-0aea-4f86-a2da-e185f91929f4')/Resources]]
  */
 		Assert.assertNotNull(msg, fromDb);
@@ -223,28 +223,28 @@ EXPERIMENT links - [
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-		
+
 		Assert.assertEquals(msg, fromDb.getNotes(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Notes"));
 		Assert.assertEquals(msg, fromDb.getStartTime(), 		OData4JClientUtils.getDateTimeProperty(fromSvc, "StartTime"));
 		Assert.assertEquals(msg, fromDb.getEndTime(), 			OData4JClientUtils.getDateTimeProperty(fromSvc, "EndTime"));
 		Assert.assertEquals(msg, fromDb.getPurpose(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Purpose"));
 	}
-	
+
 	public static void assertEquals(String msg, AnalysisRecord fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IAnnotatableEntityBase)fromDb, fromSvc, svc, db);
-		
+
 		Assert.assertEquals(msg, fromDb.getNotes(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Notes"));
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		Assert.assertEquals(msg, fromDb.getScmRevision(), 		OData4JClientUtils.getIntegerProperty(fromSvc,	"ScmRevision", Integer.MIN_VALUE));
 		Assert.assertEquals(msg, fromDb.getEntryFunctionName(), OData4JClientUtils.getStringProperty(fromSvc, 	"EntryFunctionName"));
 		Assert.assertEquals(msg, OvationModelBase.convertURLToString(fromDb.getScmURL()), OData4JClientUtils.getStringProperty(fromSvc, 	"ScmURL"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(), OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
-		
+
 		assertEquals(msg, fromDb.getProject(), OData4JClientUtils.getSubEntity(svc, fromSvc, "Project"), svc, db);
 
 		assertEquals(msg + "- resourceNames",  OData4JClientUtils.getSubEntities(svc, fromSvc, "AnalysisParameters"), 	fromDb.getAnalysisParameters());
 		assertEquals(msg + "- epochs",  OData4JClientUtils.getSubEntities(svc, fromSvc, "Epochs"), 	fromDb.getEpochs());
-		
+
 	}
 
 	public static void assertEquals(String msg, DerivedResponse fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
@@ -269,7 +269,7 @@ EXPERIMENT links - [
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-		
+
 		Assert.assertEquals(msg, fromDb.getDescription(), 		OData4JClientUtils.getStringProperty(fromSvc, 	"Description"));
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		JUnitUtils.assertEquals(msg, fromDb.getDataBytes(), 	OData4JClientUtils.getByteArrayProperty(fromSvc,"DataBytes"));
@@ -284,11 +284,11 @@ EXPERIMENT links - [
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 			OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),		OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),			OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-// EPOCH links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroup,title=EpochGroup,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/EpochGroup], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/PreviousEpoch,title=PreviousEpoch,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/PreviousEpoch], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NextEpoch,title=NextEpoch,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/NextEpoch], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnalysisRecords,title=AnalysisRecords,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/AnalysisRecords], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Responses,title=Responses,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Responses], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DerivedResponseNames,title=DerivedResponseNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/DerivedResponseNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DerivedResponses,title=DerivedResponses,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/DerivedResponses], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Stimuli,title=Stimuli,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Stimuli], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ProtocolParameters,title=ProtocolParameters,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ProtocolParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/StimuliNames,title=StimuliNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/StimuliNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResponseNames,title=ResponseNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ResponseNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Resources]]	
+// EPOCH links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroup,title=EpochGroup,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/EpochGroup], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/PreviousEpoch,title=PreviousEpoch,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/PreviousEpoch], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NextEpoch,title=NextEpoch,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/NextEpoch], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnalysisRecords,title=AnalysisRecords,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/AnalysisRecords], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Responses,title=Responses,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Responses], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DerivedResponseNames,title=DerivedResponseNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/DerivedResponseNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DerivedResponses,title=DerivedResponses,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/DerivedResponses], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Stimuli,title=Stimuli,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Stimuli], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ProtocolParameters,title=ProtocolParameters,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ProtocolParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/StimuliNames,title=StimuliNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/StimuliNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResponseNames,title=ResponseNames,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/ResponseNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Epochs('5f4b1bbd-979d-414c-ad8d-2a9f95e22161')/Resources]]
 		Assert.assertEquals(msg, fromDb.getDuration(), 					OData4JClientUtils.getDoubleProperty(fromSvc, 	"Duration"));
 		JUnitUtils.assertEquals(msg, fromDb.getExcludeFromAnalysis(),	OData4JClientUtils.getBooleanProperty(fromSvc,	"ExcludeFromAnalysis"));
 		Assert.assertEquals(msg, fromDb.getProtocolID(),				OData4JClientUtils.getStringProperty(fromSvc, 	"ProtocolID"));
-		
+
 		/*
     // Epoch extends TimelineElement
     protected static Object getProperty(Epoch obj, PropertyName prop) {
@@ -314,7 +314,7 @@ EXPERIMENT links - [
     }
 		 */
 	}
-	
+
 	public static void assertEquals(String msg, EpochGroup fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 /*
     // EpochGroup extends TimelineElement
@@ -370,20 +370,20 @@ EXPERIMENT links - [
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));		- EntityBase has this, but not IEntityBase
-		//EXTERNAL_DEVICE links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiment,title=Experiment,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Experiment], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Resources], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Properties]]		
+		//EXTERNAL_DEVICE links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiment,title=Experiment,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Experiment], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Resources], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=ExternalDevices('79fe17ea-c63d-4563-8022-a5345a5e76f0')/Properties]]
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		Assert.assertEquals(msg, fromDb.getManufacturer(), 		OData4JClientUtils.getStringProperty(fromSvc, 	"Manufacturer"));
 	}
-	
+
 	public static void assertEquals(String msg, Project fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (ITimelineElement)fromDb, fromSvc, svc, db);
-		
+
 		//PROJECT links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Owner], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiments,title=Experiments,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Experiments], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnalysisRecords,title=AnalysisRecords,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/AnalysisRecords], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnalysisRecordNames,title=MyAnalysisRecordNames,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyAnalysisRecordNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnalysisRecords,title=MyAnalysisRecords,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/MyAnalysisRecords], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnalysisRecordNames,title=AnalysisRecordNames,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/AnalysisRecordNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Projects('9184e918-c69c-4c75-a4b7-6a195ce0986a')/Resources]]
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 		Assert.assertEquals(msg, fromDb.getNotes(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Notes"));
 		Assert.assertEquals(msg, fromDb.getPurpose(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Purpose"));
-		
+
 /*
     protected static Object getProperty(Project obj, PropertyName prop) {
     	switch (prop) {
@@ -391,21 +391,21 @@ EXPERIMENT links - [
 	    	case SerializedLocation:	return obj.getSerializedLocation();
 	    	case Notes:					return obj.getNotes();		// 2 different interfaces so easier to just handle it here (for now)
 	    	case Purpose: 				return obj.getPurpose();
-	    	default: 					return getProperty((ITimelineElement)obj, prop); 
+	    	default: 					return getProperty((ITimelineElement)obj, prop);
     		case AnalysisRecords: 		return obj.getAnalysisRecordIterable();
     		case AnalysisRecordNames:	return CollectionUtils.makeIterable(obj.getAnalysisRecordNames());
     		case Experiments:			return CollectionUtils.makeIterable(obj.getExperiments());
     		case MyAnalysisRecords:		return obj.getMyAnalysisRecordIterable();
     		case MyAnalysisRecordNames:	return CollectionUtils.makeIterable(obj.getMyAnalysisRecordNames());
-	    	default: 					return getCollection((ITimelineElement)obj, col); 
+	    	default: 					return getCollection((ITimelineElement)obj, col);
     	}
     }
  */
 	}
-	
+
 	public static void assertEquals(String msg, Resource fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 		assertEquals(msg, (IAnnotatableEntityBase)fromDb, fromSvc, svc, db);
-		
+
 		Assert.assertEquals(msg, fromDb.getNotes(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Notes"));
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		JUnitUtils.assertEquals(msg, fromDb.getDataBytes(), 			OData4JClientUtils.getByteArrayProperty(fromSvc,"Data"));
@@ -425,7 +425,7 @@ EXPERIMENT links - [
     }
 		 */
 	}
-	
+
 	public static void assertEquals(String msg, Response fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 /*
     // Response extends ResponseDataBase
@@ -448,26 +448,26 @@ EXPERIMENT links - [
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-		
+
 		Assert.assertEquals(msg, fromDb.getUnits(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Units"));
 		Assert.assertEquals(msg, fromDb.getUTI(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"UTI"));
 		Assert.assertEquals(msg, fromDb.isIncomplete(), 		OData4JClientUtils.getBooleanProperty(fromSvc, 	"IsIncomplete") == Boolean.TRUE);
 		JUnitUtils.assertEquals(msg, fromDb.getDataBytes(), 	OData4JClientUtils.getByteArrayProperty(fromSvc,"Data"));
 
-		
+
 		// Associated single objects
 		Epoch 	epoch		= fromDb.getEpoch();
 		OEntity svcEpoch 	= OData4JClientUtils.getSubEntity(svc, fromSvc, "Epoch");
 		OvationJUnitUtils.assertEquals(msg + " - epoch", epoch, svcEpoch, svc, db);
-			
+
 		ExternalDevice 	dev		= fromDb.getExternalDevice();
 		OEntity 		svcDev 	= OData4JClientUtils.getSubEntity(svc, fromSvc, "ExternalDevice");
 		OvationJUnitUtils.assertEquals(msg + " - device", dev, svcDev, svc, db);
 
-// how to use/test these?		
+// how to use/test these?
 		NumericDataType dataType		= fromDb.getNumericDataType();
 		NumericData 	data 			= fromDb.getData();
-		
+
 		Set<String> 	annoGroupTagSet = fromDb.getAnnotationGroupTagSet();
 		IAnnotation[] 	annotations 	= fromDb.getAnnotations();
 		Map<String,Object> devParams 	= fromDb.getDeviceParameters();
@@ -478,48 +478,48 @@ EXPERIMENT links - [
 		IAnnotation[] 	myAnnotations 	= fromDb.getMyAnnotations();
 		KeywordTag[]  	myKeywordTags 	= fromDb.getMyKeywordTags();
 
-		
+
 	    /**
 	static Enumerable<OEntity> 	getAllEntities(Entity type) 				{ return OData4JClientUtils.getAllEntities(_odataClient, type._setName); }
 	static OEntity 				getSubEntity(OEntity root, String name) 	{ return OData4JClientUtils.getSubEntity(_odataClient, root, name); }
 	static Enumerable<OEntity> 	getSubEntities(OEntity root, String name) 	{ return OData4JClientUtils.getSubEntities(_odataClient, root, name); }
 	static <T> List<T> 			getAllFromDB(Class<T> type) 				{ return OvationUtils.getAllFromDB(_dbContext, type); }
 	static <T> T 				getFromDB(String uri) 						{ return OvationUtils.getFromDB(_dbContext, uri); }
-	
+
 RESPONSE links - [
-ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Owner], 
-ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NumericDataType,title=NumericDataType,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/NumericDataType], 
-ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ExternalDevice], 
+ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Owner],
+ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NumericDataType,title=NumericDataType,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/NumericDataType],
+ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ExternalDevice],
 ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Epoch],
- 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingUnits,title=SamplingUnits,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingUnits], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ResourceNames], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingRates,title=SamplingRates,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingRates], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatingPointData,title=FloatingPointData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatingPointData], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyTags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatData,title=FloatData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatData], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DeviceParameters], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotationGroupTags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Properties], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Tags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotations], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Shape,title=Shape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Shape], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyProperties], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyKeywordTags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MatlabShape,title=MatlabShape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MatlabShape], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntData,title=IntData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntData], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/AnnotationGroupTags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntegerData,title=IntegerData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntegerData], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DoubleData,title=DoubleData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DoubleData], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/KeywordTags], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DimensionLabels], 
-ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Annotations], 
+
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingUnits,title=SamplingUnits,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingUnits],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ResourceNames],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingRates,title=SamplingRates,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingRates],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatingPointData,title=FloatingPointData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatingPointData],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyTags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatData,title=FloatData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatData],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DeviceParameters],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotationGroupTags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Properties],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Tags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotations],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Shape,title=Shape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Shape],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyProperties],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyKeywordTags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MatlabShape,title=MatlabShape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MatlabShape],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntData,title=IntData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntData],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/AnnotationGroupTags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntegerData,title=IntegerData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntegerData],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DoubleData,title=DoubleData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DoubleData],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/KeywordTags],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DimensionLabels],
+ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Annotations],
 ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Resources]]
 
 	     * *** EntityBase (MyProperties:<String,Object>[], Owner:User, Properties:<String,Object[]>[], ResourceNames:String[], Resources:Resource[], URI:String, UUID:String, IsComplete:bool)
 	     * **** KeywordTag (Tag:String, Tagged:TaggableEntityBase[])
-	     * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[]) 
-	     * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[]) 
+	     * **** TaggableEntityBase (KeywordTags:KeywordTag[], MyKeywordTags:KeywordTag[], MyTags:String[], Tags:String[])
+	     * ***** AnnotatableEntityBase (AnnotationGroupTags:String[], Annotations:IAnnotation[], MyAnnotationGroupTags:String[], MyAnnotations:IAnnotation[])
 	     * ****** AnalysisRecord (AnalysisParameters:<String,Object>[], EntryFunctionName:String, Epochs:Epoch[], Name:String, Notes:String, Project:Project, ScmRevision:String, ScmURL:String, SerializedLocation:String)
 	     * ****** ExternalDevice (Experiment:Experiment, Manufacturer:String, Name:String, SerializedLocation:String)
 	     * ****** Source (AllEpochGroups:EpochGroup[], AllExperiments:Experiment[], ChildLeafDescendants:Source[], Children:Source[], EpochGroups:EpochGroup[], Experiments:Experiment[], Label:String, Parent:Source, ParentRoot:Source, SerializedLocation:String)
@@ -529,7 +529,7 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 	     * ******* Stimulus (Epoch:Epoch, PluginID:String, SerializedLocation:String, StimulusParameters:<String,Object>[])
 	     * ******* ResponseDataBase (Data:NumericData, DataBytes:byte[], DoubleData:double[], FloatData:float[], FloatingPointData:double[], IntData:int[], IntegerData:int[], MatlabShape:long[], NumericDataType:NumericDataType, Shape:long[])
 	     * ******** Response (Epoch:Epoch, SamplingRates:double[], SamplingUnits:String[], SerializedLocation:String, UTI:String)
-	     * 
+	     *
 	     * ******** DerivedResponse (DerivationParameters:<String,Object>[], Description:String, Epoch:Epoch, Name:String, SerializedLocation:String)
 	     * ****** TimelineElement (EndTime:DateTime, StartTime:DateTime)
 	     * ******* EpochGroup (ChildLeafDescendants:EpochGroup[], Children:EpochGroup[], EpochCount:int, Epochs:Epoch[], EpochsUnsorted:Epoch[], Experiment:Experiement, Label:String, Parent:EpochGroup, SerializedLocation:String, Source:Source)
@@ -538,8 +538,8 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 	     * ******** Experiment (EpochGroups:EpochGroup[], Epochs:Epoch[], ExternalDevices:ExternalDevice[], Projects:Project[], SerializedLocation:String, Sources:Source[])
 	     * ******** Project (AnalysisRecords:AnalysisRecord[], AnalysisRecordNames:String[], Experiments:Experiment[], MyAnalysisRecords:AnalysisRecord[], MyAnalysisRecordNames:String[], Name:String, SerializedLocation:String)
 	     */
-		
-			
+
+
 			long[] mshape = fromDb.getMatlabShape();
 			NumericDataType ndtype = fromDb.getNumericDataType();
 			long[] shape = fromDb.getShape();
@@ -557,40 +557,40 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 				fromDb.getMyProperties();		// String,Object
 				fromDb.getProperties();			// String,Object[]
 				fromDb.getResourcesIterable();
-			
-		/*				
+
+		/*
 		links - [
-		 
-		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NumericDataType,title=NumericDataType,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/NumericDataType], 
-		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ExternalDevice], 
-		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Epoch], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingUnits,title=SamplingUnits,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingUnits], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ResourceNames], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingRates,title=SamplingRates,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingRates], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatingPointData,title=FloatingPointData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatingPointData], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyTags], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatData,title=FloatData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatData], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DeviceParameters], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotationGroupTags], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Properties], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Tags], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotations], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Shape,title=Shape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Shape], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyProperties], 
+
+		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/NumericDataType,title=NumericDataType,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/NumericDataType],
+		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ExternalDevice],
+		ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Epoch],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingUnits,title=SamplingUnits,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingUnits],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/ResourceNames],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SamplingRates,title=SamplingRates,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/SamplingRates],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatingPointData,title=FloatingPointData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatingPointData],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyTags],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/FloatData,title=FloatData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/FloatData],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DeviceParameters],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotationGroupTags],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Properties],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Tags],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyAnnotations],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Shape,title=Shape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Shape],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyProperties],
 		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MyKeywordTags],
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MatlabShape,title=MatlabShape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MatlabShape], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntData,title=IntData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntData], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/AnnotationGroupTags], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntegerData,title=IntegerData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntegerData], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DoubleData,title=DoubleData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DoubleData], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/KeywordTags], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DimensionLabels], 
-		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Annotations], 
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MatlabShape,title=MatlabShape,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/MatlabShape],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntData,title=IntData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntData],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/AnnotationGroupTags],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/IntegerData,title=IntegerData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/IntegerData],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DoubleData,title=DoubleData,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DoubleData],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/KeywordTags],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/DimensionLabels],
+		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Annotations],
 		ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Responses('4cc5f992-be59-4bc0-8956-d0ed59e2ff71')/Resources]]
 		*/
-		
-		
-		//	User owner2 = 
+
+
+		//	User owner2 =
 		//	fromDb.getData();
 		//	fromDb.getDoubleData();
 		//	fromDb.getFloatData();
@@ -606,7 +606,7 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-// SOURCE links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentRoot,title=ParentRoot,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ParentRoot], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentSource,title=ParentSource,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ParentSource], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiments,title=Experiments,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Experiments], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroups,title=EpochGroups,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/EpochGroups], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SourceChildren,title=SourceChildren,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/SourceChildren], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ChildLeafSourceDescendants,title=ChildLeafSourceDescendants,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ChildLeafSourceDescendants], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AllEpochGroups,title=AllEpochGroups,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AllEpochGroups], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AllExperiments,title=AllExperiments,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AllExperiments], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Resources]]		
+// SOURCE links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentRoot,title=ParentRoot,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ParentRoot], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentSource,title=ParentSource,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ParentSource], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Experiments,title=Experiments,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Experiments], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/EpochGroups,title=EpochGroups,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/EpochGroups], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/SourceChildren,title=SourceChildren,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/SourceChildren], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ChildLeafSourceDescendants,title=ChildLeafSourceDescendants,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/ChildLeafSourceDescendants], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AllEpochGroups,title=AllEpochGroups,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AllEpochGroups], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AllExperiments,title=AllExperiments,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AllExperiments], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Sources('c47bcd1c-e863-46ea-a674-ab21fe9a6348')/Resources]]
 		Assert.assertEquals(msg, fromDb.getLabel(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Label"));
 /*
     // Source extends AnnotatableEntityBase
@@ -628,10 +628,10 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
     }
  */
 	}
-	
+
 	public static void assertEquals(String msg, Stimulus fromDb, OEntity fromSvc, ODataConsumer svc, DataContext db) {
 /*
-    // Stimulus extends IOBase 
+    // Stimulus extends IOBase
     protected static Object getProperty(Stimulus obj, PropertyName prop) {
     	switch (prop) {
     		case Epoch:				return obj.getEpoch();
@@ -650,7 +650,7 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-// STIMULUS links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/ExternalDevice], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Epoch], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/DeviceParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/StimulusParameters,title=StimulusParameters,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/StimulusParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/DimensionLabels], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Resources]]		
+// STIMULUS links - [ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Owner,title=Owner,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Owner], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ExternalDevice,title=ExternalDevice,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/ExternalDevice], ORelatedEntityLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Epoch,title=Epoch,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Epoch], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/ResourceNames,title=ResourceNames,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/ResourceNames], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DeviceParameters,title=DeviceParameters,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/DeviceParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyTags,title=MyTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotationGroupTags,title=MyAnnotationGroupTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyAnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties,title=Properties,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Properties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyAnnotations,title=MyAnnotations,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyAnnotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Tags,title=Tags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Tags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyProperties,title=MyProperties,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyProperties], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/MyKeywordTags,title=MyKeywordTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/MyKeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/StimulusParameters,title=StimulusParameters,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/StimulusParameters], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/AnnotationGroupTags,title=AnnotationGroupTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/AnnotationGroupTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/DimensionLabels,title=DimensionLabels,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/DimensionLabels], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Annotations,title=Annotations,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Annotations], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/KeywordTags,title=KeywordTags,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/KeywordTags], ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/related/Resources,title=Resources,href=Stimuli('4685068c-0a84-4012-8fbf-0b5921eb4650')/Resources]]
 		Assert.assertEquals(msg, fromDb.getUnits(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Units"));
 		Assert.assertEquals(msg, fromDb.getPluginID(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"PluginID"));
 	}
@@ -663,7 +663,7 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 		JUnitUtils.assertEquals(msg, fromDb.isIncomplete(), 	OData4JClientUtils.getBooleanProperty(fromSvc,	"IsIncomplete"));
 		Assert.assertEquals(msg, fromDb.getSerializedLocation(),OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedLocation"));
 	//	Assert.assertEquals(msg, fromDb.getSerializedName(),	OData4JClientUtils.getStringProperty(fromSvc, 	"SerializedName"));
-		
+
 		Assert.assertEquals(msg, fromDb.getNotes(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Notes"));
 		Assert.assertEquals(msg, fromDb.getName(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"Name"));
 		Assert.assertEquals(msg, fromDb.getUti(), 				OData4JClientUtils.getStringProperty(fromSvc, 	"UTI"));
@@ -692,29 +692,29 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
     protected static Object getProperty(User obj, PropertyName prop) {
     	switch (prop) {
 	    	case Username:	return obj.getUsername();
-	    	default: 		return getProperty((ITaggableEntityBase)obj, prop); 
-	    	default: 					return getCollection((ITaggableEntityBase)obj, col); 
+	    	default: 		return getProperty((ITaggableEntityBase)obj, prop);
+	    	default: 					return getCollection((ITaggableEntityBase)obj, col);
     	}
     }
  */
 		User 			owner = fromDb.getOwner();
-		
-		
+
+
 		Set<KeywordTag> tags = fromDb.getTagSet();
-		
-		/* User		
-		"Owner" : 			{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Owner"}, 
-		"Tags" : 			{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Tags"}, 
-		"MyProperties" :  	{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/MyProperties"}, 
-		"ResourceNames" : 	{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/ResourceNames"	
+
+		/* User
+		"Owner" : 			{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Owner"},
+		"Tags" : 			{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Tags"},
+		"MyProperties" :  	{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/MyProperties"},
+		"ResourceNames" : 	{"uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/ResourceNames"
 		"MyKeywordTags" : "uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/MyKeywordTags"
 		"MyTags" : "uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/MyTags"
 		"KeywordTags" : "uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/KeywordTags"
 		"Resources" : "uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Resources"
 		"Properties" : "uri" : "http://localhost:8080/ovodata/Ovodata.svc/Users('ron')/Properties"
-*/			
-		
-		
+*/
+
+
 		Assert.assertEquals(msg, fromDb.getUsername(), 			OData4JClientUtils.getStringProperty(fromSvc, 	"Username"));
 	}
 
@@ -728,7 +728,7 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 		}
 
 	}
-	
+
 	static <T> void assertEquals(String msg, Enumerable<OEntity> fromSvc, T... fromDb) {
 		Assert.assertNotNull(msg, fromDb);
 		Assert.assertNotNull(msg, fromSvc);
@@ -739,5 +739,5 @@ ORelatedEntitiesLink[rel=http://schemas.microsoft.com/ado/2007/08/dataservices/r
 		}
 
 	}
-	
+
 }

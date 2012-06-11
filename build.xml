@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant"
-         name="OvoData"
+         name="ovation-odata"
          default="all">
     <description>Ovation OData Web-service</description>
 
@@ -9,10 +9,12 @@
     <property name="dir.war"            value="${basedir}/war"/>
     <property name="dir.lib"            value="${basedir}/lib"/>
     <property name="dir.3rdparty-tmp"   value="${basedir}/3pjars"/>
-    <property name="dir.distrib"        value="${basedir}/distrib"/>
+    <property name="dir.distrib"        value="${basedir}/bin"/>
+    <property name="dir.distrib.jar"   value="${dir.distrib}/jars"/>
+    <property name="dir.distrib.war"   value="${dir.distrib}/wars"/>
     <property name="dir.dotcloud"       value="${basedir}/dotcloud/odata"/>
-    <property name="jar.release"        value="ovodata.jar"/>
-    <property name="war.release"        value="ovodata.war"/>
+    <property name="jar.release"        value="ovation-odata.jar"/>
+    <property name="war.release"        value="ovation-odata.war"/>
     <property name="war.release.root"   value="ROOT.war"/>
     <property name="guava.jar.path"     value="${dir.lib}/guava-10.0.1.jar"/>
     <property name="odata4j.jar.path"   value="${dir.lib}/odata4j-0.6.0-bundle.jar"/>
@@ -50,10 +52,10 @@
     </target>
 
     <target name="jar" depends="compile" description="build war">
-        <mkdir dir="${dir.distrib}"/>
+        <mkdir dir="${dir.distrib.jar}"/>
     	<!-- jarring is so fast it's faster to blow away old jar than compare timestamps -->
-    	<delete file="${dir.distrib}/${jar.release}"/>
-        <jar jarfile="${dir.distrib}/${jar.release}">
+    	<delete file="${dir.distrib.jar}/${jar.release}"/>
+        <jar jarfile="${dir.distrib.jar}/${jar.release}">
             <fileset dir="${dir.compile}"/>
             <manifest>
                 <attribute name="Main-Class" value="ovation.odata.service.StandaloneJerseyServer"/>
@@ -67,10 +69,10 @@
     </target>
 
     <target name="war" depends="jar" description="build war">
-        <war basedir="${dir.war}" includes="**/*" warfile="${dir.distrib}/${war.release}">
-            <lib file="${dir.distrib}/${jar.release}"/>
+        <war basedir="${dir.war}" includes="**/*" warfile="${dir.distrib.war}/${war.release}">
+            <lib file="${dir.distrib.war}/${jar.release}"/>
         </war>
-        <copy file="${dir.distrib}/${war.release}" tofile="${dir.dotcloud}/${war.release.root}"/>
+        <copy file="${dir.distrib.war}/${war.release}" tofile="${dir.dotcloud}/${war.release.root}"/>
     </target>
 
     <target name="runserver" depends="jar" description="run test server">
@@ -92,14 +94,12 @@
         <mkdir dir="${ivy.jar.dir}"/>
         <!-- download Ivy from web site so that it can be used even without any special installation -->
         <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-             dest="${ivy.jar.file}" usetimestamp="true"/>
+             dest="${ivy.jar.file}"
+             usetimestamp="true"/>
     </target>
 
     <target name="init-ivy" depends="download-ivy">
-        <!-- try to load ivy here from ivy home, in case the user has not already dropped
-it into ant's lib dir (note that the latter copy will always take precedence).
-We will not fail as long as local lib dir exists (it may be empty) and
-ivy is in at least one of ant's lib dir or the local lib dir. -->
+        <!-- try to load ivy here from ivy home, in case the user has not already dropped it into ant's lib dir (note that the latter copy will always take precedence). We will not fail as long as local lib dir exists (it may be empty) and ivy is in at least one of ant's lib dir or the local lib dir. -->
         <path id="ivy.lib.path">
             <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
 
@@ -113,5 +113,17 @@ ivy is in at least one of ant's lib dir or the local lib dir. -->
             depends="init-ivy"
             >
         <ivy:retrieve/>
+    </target>
+
+    <target name="gen-pom" depends="init-ivy">
+        <ivy:makepom ivyfile="ivy.xml" pomfile="bin/poms/${ant.project.name}.pom">
+            <mapping conf="default" scope="compile"/>
+        </ivy:makepom>
+    </target>
+
+    <target name="ivy-publish-local" depends="jar, init-ivy, gen-pom">
+        <ivy:publish resolver="local-m2" forcedeliver="true" overwrite="true" publishivy="false">
+            <artifacts pattern="bin/[type]s/[artifact].[ext]"/>
+        </ivy:publish>
     </target>
 </project>
